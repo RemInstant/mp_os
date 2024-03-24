@@ -3,6 +3,8 @@ project(mp_os_cmmn)
 
 add_library(
         mp_os_cmmn
+        src/extra_utility.cpp
+        src/file_cannot_be_opened.cpp
         src/not_implemented.cpp
         src/operation_not_supported.cpp)
 target_include_directories(
