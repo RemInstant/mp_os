@@ -59,6 +59,40 @@ std::string logger::severity_to_string(
     throw std::out_of_range("Invalid severity value");
 }
 
+logger::severity logger::string_to_severity(
+        std::string str)
+{
+    for (size_t i = 0; i < str.size(); ++i)
+    {
+        str[i] = toupper(str[i]);
+    }
+    
+    if (str == "TRACE")
+        return severity::trace;
+    else if (str == "DEBUG")
+        return severity::debug;
+    else if (str == "INFORMATION")
+        return severity::information;
+    else if (str == "WARNING")
+        return severity::warning;
+    else if (str == "ERROR")
+        return severity::error;
+    else if (str == "CRITICAL")
+        return severity::critical;
+
+    throw std::out_of_range("Invalid severity value");
+}
+
+std::string logger::global_datetime_to_string() noexcept
+{
+    auto time = std::time(nullptr);
+
+    std::ostringstream result_stream;
+    result_stream << std::put_time(std::gmtime(&time), "%d.%m.%Y %H:%M:%S");
+
+    return result_stream.str();
+}
+
 std::string logger::current_datetime_to_string() noexcept
 {
     auto time = std::time(nullptr);

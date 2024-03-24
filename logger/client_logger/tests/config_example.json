@@ -1,0 +1,21 @@
+{
+    "lol":
+    {
+        "kek": "cheburek"
+    },
+    "garbage": "collector",
+    "wrapper":
+    {
+        "GOY": "DA",
+        "client_logger_builder.config":
+        {
+            "format_string": "%d %t - [%s] %m",
+            "logger_files":
+            {
+                "./aboba": "DEBUG",
+                "../tests/aboba": "TRACE",
+                "console": "TRACE"
+            }
+        }
+    }
+}
