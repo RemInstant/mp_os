@@ -1,39 +1,56 @@
+#include <cmath>
+#include <string.h>
+#include <unistd.h>
+#include <sys/msg.h>
+
 #include <not_implemented.h>
 
 #include "../include/server_logger.h"
 
-server_logger::server_logger(
-    server_logger const &other)
-{
-    throw not_implemented("server_logger::server_logger(server_logger const &other)", "your code should be here...");
-}
+std::mutex server_logger::mutex;
 
-server_logger &server_logger::operator=(
-    server_logger const &other)
+server_logger::server_logger(std::map<std::string, std::set<severity>> const &log_dest):
+    _configuration(log_dest)
 {
-    throw not_implemented("server_logger &server_logger::operator=(server_logger const &other)", "your code should be here...");
-}
-
-server_logger::server_logger(
-    server_logger &&other) noexcept
-{
-    throw not_implemented("server_logger::server_logger(server_logger &&other) noexcept", "your code should be here...");
-}
-
-server_logger &server_logger::operator=(
-    server_logger &&other) noexcept
-{
-    throw not_implemented("server_logger &server_logger::operator=(server_logger &&other) noexcept", "your code should be here...");
-}
-
-server_logger::~server_logger() noexcept
-{
-    throw not_implemented("server_logger::~server_logger() noexcept", "your code should be here...");
+    int mq_descryptor = msgget(LINUX_SERVER_KEY, 0666);
+	
+	if (mq_descryptor == -1)
+	{
+        throw std::runtime_error("Cannot connect to the server");
+	}
 }
 
 logger const *server_logger::log(
     const std::string &text,
     logger::severity severity) const noexcept
 {
-    throw not_implemented("logger const *server_logger::log(const std::string &text, logger::severity severity) const noexcept", "your code should be here...");
+    for (auto record : _configuration)
+    {
+        const std::string &file_path = record.first;
+        const auto &severities = record.second;
+        
+        if (severities.count(severity))
+        {
+            mutex.lock();
+            
+            msg_t msg;
+            msg.mtype = LOG_PRIOR;
+            msg.pid = getpid();
+            msg.packet_cnt = std::ceil(1.0 * text.size() / MAX_MSG_TEXT_SIZE);
+            msg.severity = static_cast<int>(severity);
+            
+            strcpy(msg.file_path, file_path.c_str());
+            
+            for (size_t i = 0; i < msg.packet_cnt; ++i)
+            {
+                msg.packet_id = i + 1;
+                strcpy(msg.mtext, text.substr(i * MAX_MSG_TEXT_SIZE, MAX_MSG_TEXT_SIZE).c_str());
+	            msgsnd(_mq_descryptor, &msg, sizeof(msg_t), 0);
+            }
+            
+            mutex.unlock();
+        }
+    }
+    
+    return this;
 }
