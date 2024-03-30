@@ -19,7 +19,7 @@ private:
     static std::unordered_map<std::string, std::pair<std::ostream *, size_t>> _all_streams;
 
 private:
-    
+
     std::string _format_string;
     std::map<std::string, std::pair<std::ostream *, std::set<logger::severity>>> _streams;
 
@@ -32,16 +32,16 @@ private:
 public:
 
     client_logger(
-        client_logger const &other) = delete;
+        client_logger const &other);
 
     client_logger &operator=(
-        client_logger const &other) = delete;
+        client_logger const &other);
 
     client_logger(
-        client_logger &&other) = delete;
+        client_logger &&other) noexcept;
 
     client_logger &operator=(
-        client_logger &&other) = delete;
+        client_logger &&other) noexcept;
 
     ~client_logger() noexcept final;
 

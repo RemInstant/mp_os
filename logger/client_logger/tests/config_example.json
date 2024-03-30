@@ -6,15 +6,15 @@
     "garbage": "collector",
     "wrapper":
     {
-        "GOY": "DA",
+        "wrapper": "123",
         "client_logger_builder.config":
         {
             "format_string": "%d %t - [%s] %m",
             "logger_files":
             {
-                "./aboba": "DEBUG",
-                "../tests/aboba": "TRACE",
-                "console": "TRACE"
+                "./aboba": [ "DEBUG" ],
+                "../tests/aboba": [ "TRACE" ],
+                "console": [ "DEBUG", "INFORMATION" ]
             }
         }
     }

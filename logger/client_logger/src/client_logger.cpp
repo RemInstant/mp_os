@@ -17,9 +17,9 @@ client_logger::client_logger(
         const std::string &file_path = iter->first;
         const std::set<logger::severity> &severities = iter->second;
         
-        if (file_path == "console")
+        if (file_path.size() == 0)
         {
-            _streams["console"] = std::make_pair(&std::cout, severities);
+            _streams[""] = std::make_pair(&std::cout, severities);
             continue;
         }
         
@@ -36,8 +36,10 @@ client_logger::client_logger(
                     throw file_cannot_be_opened(file_path);
                 }
             }
-            catch ( ... )
+            catch (const std::exception&)
             {
+                delete stream;
+                
                 for (auto del_iter = configuration.begin(); del_iter != iter; ++del_iter)
                 {
                     decrement_stream_users(del_iter->first);
@@ -54,7 +56,6 @@ client_logger::client_logger(
     }
 }
 
-/*
 client_logger::client_logger(
     client_logger const &other):
     _format_string(other._format_string),
@@ -69,6 +70,11 @@ client_logger::client_logger(
 client_logger &client_logger::operator=(
     client_logger const &other)
 {
+    if (this == &other)
+    {
+        return *this;
+    }
+    
     for (auto record : _streams)
     {
         decrement_stream_users(record.first);
@@ -94,6 +100,11 @@ client_logger::client_logger(
 client_logger &client_logger::operator=(
     client_logger &&other) noexcept
 {
+    if (this == &other)
+    {
+        return *this;
+    }
+    
     for (auto record : _streams)
     {
         decrement_stream_users(record.first);
@@ -104,7 +115,7 @@ client_logger &client_logger::operator=(
     
     return *this;
 }
-*/
+
 
 client_logger::~client_logger() noexcept
 {
@@ -169,16 +180,22 @@ logger const *client_logger::log(
 
 void client_logger::decrement_stream_users(std::string const &file_path) const noexcept
 {
-    if (file_path == "console")
+    if (file_path.size() == 0)
     {
         return;
     }
     
-    _all_streams[file_path].second--;
+    auto iter = _all_streams.find(file_path);
     
-    if (_all_streams[file_path].second == 0)
+    auto &stream = iter->second.first;
+    auto &counter = iter->second.second;
+    
+    counter--;
+    
+    if (counter == 0)
     {
-        delete _all_streams[file_path].first;
-        _all_streams.erase(file_path);
+        stream->flush();
+        delete stream;
+        _all_streams.erase(iter);
     }
 }

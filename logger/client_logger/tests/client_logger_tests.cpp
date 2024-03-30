@@ -17,7 +17,7 @@ int main(
 
     // return RUN_ALL_TESTS();
     
-    std::string config_path = "D:/Code/VSCode/mp_os/logger/client_logger/tests/config_example.json";
+    std::string config_path = "/home/remi/Code/VSCode/mp_os/logger/client_logger/tests/config_example.json";
     
     logger_builder *builder = new client_logger_builder("%d %t - [%s] %m");
     
@@ -37,7 +37,7 @@ int main(
     
     lg->trace("TRACE!!!");
     lg->debug("DEBUG!!!");
-    //lg2->information("INFORMATION!!!");
+    lg->information("INFORMATION!!!");
     
     delete builder;
     delete lg;

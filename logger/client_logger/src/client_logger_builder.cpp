@@ -1,8 +1,12 @@
+#include <vector>
+#include <fstream>
 #include <filesystem>
 
 #include <not_implemented.h>
+#include <file_cannot_be_opened.h>
 #include <client_logger.h>
-#include <extra_utility.h>
+
+#include <nlohmann/json.hpp>
 
 #include "../include/client_logger_builder.h"
 
@@ -35,7 +39,7 @@ logger_builder *client_logger_builder::add_file_stream(
 logger_builder *client_logger_builder::add_console_stream(
     logger::severity severity)
 {
-    _configuration["console"].insert(severity);
+    _configuration[""].insert(severity);
     
     return this;
 }
@@ -43,39 +47,57 @@ logger_builder *client_logger_builder::add_console_stream(
 logger_builder* client_logger_builder::transform_with_configuration(
     std::string const &configuration_file_path,
     std::string const &configuration_path)
-{   
-    _format_string = extra_utility::get_from_json(
-            configuration_file_path, configuration_path + ":format_string");
+{
+    std::ifstream stream(configuration_file_path);
     
-    std::string logger_files = extra_utility::get_from_json(
-            configuration_file_path, configuration_path + ":logger_files");
+    if (!stream.is_open())
+    {
+        throw file_cannot_be_opened(configuration_file_path);
+    }
     
-    logger_files.pop_back();
+    std::vector<std::string> data_path_components;
+    
+    for (size_t ind = 0; ind < configuration_path.size(); )
+    {
+        size_t tmp_ind = std::min(configuration_path.find(':', ind), configuration_path.size());
+        
+        std::string component = configuration_path.substr(ind, tmp_ind - ind);
+        if (component.size() == 0)
+        {
+            throw std::runtime_error("Invalid JSON data path");
+        }
+        
+        data_path_components.push_back(std::move(component));
+        ind = tmp_ind + 1;
+    }
+    
+    nlohmann::json json_obj = nlohmann::json::parse(stream);
+    
+    for (auto path_elem : data_path_components)
+    {
+        json_obj = json_obj[path_elem];
+    }
+    
     clear();
     
-    size_t ind = 1;
-    while (ind < logger_files.size())
+    _format_string = json_obj["format_string"];
+    json_obj = json_obj["logger_files"];
+    
+    for (auto &[file_path, severities] : json_obj.items())
     {
-        size_t tmp_ind = std::min(logger_files.find(',', ind), logger_files.size());
-        
-        std::string record = logger_files.substr(ind, tmp_ind - ind);
-        
-        size_t delim_pos = record.find(':', 0);
-        
-        std::string path = record.substr(1, delim_pos - 2);
-        logger::severity severity = client_logger::string_to_severity(
-                record.substr(delim_pos + 2, record.size() - delim_pos - 3));    
-        
-        if (path == "console")
+        for (std::string severity_str : severities)
         {
-            add_console_stream(severity);
+            logger::severity severity = client_logger::string_to_severity(severity_str);
+            
+            if (file_path == "console")
+            {
+                add_console_stream(severity);
+            }
+            else
+            {
+                add_file_stream(file_path, severity);
+            }
         }
-        else
-        {
-            add_file_stream(path, severity);
-        }
-        
-        ind = tmp_ind + 1;
     }
     
     return this;
