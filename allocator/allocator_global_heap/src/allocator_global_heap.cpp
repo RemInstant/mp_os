@@ -11,19 +11,15 @@ allocator_global_heap::allocator_global_heap(
     _logger(logger)
 {
     trace_with_guard("allocator_global_heap::allocator_global_heap(logger *) was called");
-    debug_with_guard("allocator_global_heap::allocator_global_heap(logger *) was called");
     
     trace_with_guard("allocator_global_heap::allocator_global_heap(logger *) successfully finished its work");
-    debug_with_guard("allocator_global_heap::allocator_global_heap(logger *) successfully finished its work");
 }
 
 allocator_global_heap::~allocator_global_heap()
 {
     trace_with_guard("allocator_global_heap::~allocator_global_heap() was called");
-    debug_with_guard("allocator_global_heap::~allocator_global_heap() was called");
     
     trace_with_guard("allocator_global_heap::~allocator_global_heap() successfully finished its work");
-    debug_with_guard("allocator_global_heap::~allocator_global_heap() successfully finished its work");
 }
 
 allocator_global_heap::allocator_global_heap(
@@ -31,22 +27,22 @@ allocator_global_heap::allocator_global_heap(
     _logger(other._logger)
 {
     trace_with_guard("allocator_global_heap::allocator_global_heap(allocator_global_heap &&) was called");
-    debug_with_guard("allocator_global_heap::allocator_global_heap(allocator_global_heap &&) was called");
     
     trace_with_guard("allocator_global_heap::allocator_global_heap(allocator_global_heap &&) successfully finished its work");
-    debug_with_guard("allocator_global_heap::allocator_global_heap(allocator_global_heap &&) successfully finished its work");
 }
 
 allocator_global_heap &allocator_global_heap::operator=(
     allocator_global_heap &&other) noexcept
 {
     trace_with_guard("allocator_global_heap::operator=(allocator_global_heap &&) was called");
-    debug_with_guard("allocator_global_heap::operator=(allocator_global_heap &&) was called");
     
-    _logger = other._logger;
+    if (this != &other)
+    {
+        _logger = other._logger;
+        other._logger = nullptr;
+    }
     
     trace_with_guard("allocator_global_heap::operator=(allocator_global_heap &&) successfully finished its work");
-    debug_with_guard("allocator_global_heap::operator=(allocator_global_heap &&) successfully finished its work");
     
     return *this;
 }
@@ -65,7 +61,8 @@ allocator_global_heap &allocator_global_heap::operator=(
     
     try
     {
-        ptr = new unsigned char[size + sizeof(size_t*)];
+        ptr = reinterpret_cast<unsigned char*>(
+                ::operator new(size + sizeof(allocator_global_heap*) + sizeof(size_t)));
     }
     catch(const std::bad_alloc& ba)
     {
@@ -74,12 +71,13 @@ allocator_global_heap &allocator_global_heap::operator=(
         throw;
     }
     
-    *reinterpret_cast<size_t*>(ptr) = size;
+    *reinterpret_cast<allocator_global_heap**>(ptr) = this;
+    *reinterpret_cast<size_t*>(ptr + sizeof(allocator_global_heap*)) = size;
     
     trace_with_guard("allocator_global_heap::allocate(size_t, size_t) successfully finished its work");
     debug_with_guard("allocator_global_heap::allocate(size_t, size_t) successfully finished its work");
     
-    return reinterpret_cast<void*>(ptr + sizeof(size_t*));
+    return reinterpret_cast<void*>(ptr + sizeof(allocator_global_heap*) + sizeof(size_t));
 }
 
 void allocator_global_heap::deallocate(
@@ -88,15 +86,15 @@ void allocator_global_heap::deallocate(
     trace_with_guard("allocator_global_heap::deallocate(void *) was called");
     debug_with_guard("allocator_global_heap::deallocate(void *) was called");
     
-    auto ptr = reinterpret_cast<unsigned char*>(at) - sizeof(size_t*);
+    auto ptr = reinterpret_cast<unsigned char*>(at) - sizeof(allocator_global_heap*) - sizeof(size_t);
     
-    if (this <= at && at <= (reinterpret_cast<unsigned char*>(this) + sizeof(allocator_global_heap)))
+    if (*reinterpret_cast<allocator_global_heap**>(ptr) != this)
     {
-        error_with_guard("allocator_global_heap::deallocate(void *): allocator tried to deallocate itself");
-        throw std::logic_error("allocator tried to deallocate itself");
+        error_with_guard("allocator_global_heap::deallocate(void *): allocator tried to deallocate wrong memory");
+        throw std::logic_error("allocator tried to deallocate wrong memory");
     }
     
-    size_t size = *reinterpret_cast<size_t*>(ptr);
+    size_t size = *reinterpret_cast<size_t*>(ptr + sizeof(allocator_global_heap*));
     
     std::ostringstream str_stream;
     
@@ -109,13 +107,14 @@ void allocator_global_heap::deallocate(
     
     for (size_t i = 0; i < size; ++i)
     {
-        str_stream << std::setw(2) << "0x" << static_cast<unsigned int>(*(ptr + sizeof(size_t*) + i)) << ' ';
+        str_stream << "0x" << std::setw(2) << static_cast<unsigned int>
+                (*(ptr + sizeof(allocator_global_heap*) + sizeof(size_t*) + i)) << ' ';
     }
     
     debug_with_guard("allocator_global_heap::deallocate(void *): deallocated " +
             std::to_string(size) + " bytes" + str_stream.str());
     
-    delete[] ptr;
+    ::operator delete(ptr);
     
     trace_with_guard("allocator_global_heap::deallocate(void *) successfully finished its work");
     debug_with_guard("allocator_global_heap::deallocate(void *) successfully finished its work");
