@@ -25,7 +25,7 @@ struct msg_t
 
 int run_flag = 1;
 
-#ifdef LINUX
+#ifdef __linux__
 
 #include <sys/msg.h>
 
@@ -52,7 +52,7 @@ int main()
     size_t const max_msg_size = sizeof(msg_t);
     std::map<std::string, std::ofstream> streams;
     
-    #ifdef LINUX
+    #ifdef __linux__
     mq_descryptor = msgget(LINUX_MSG_QUEUE_KEY, IPC_CREAT | 0666);
     if (mq_descryptor == -1)
     {
@@ -76,7 +76,7 @@ int main()
     
     while (run_flag)
     {
-        #ifdef LINUX
+        #ifdef __linux__
         ssize_t rcv_cnt = msgrcv(mq_descryptor, &msg, max_msg_size, 0, MSG_NOERROR);
         if (rcv_cnt == -1)
         {
@@ -192,7 +192,7 @@ int main()
         stream.close();
     }
     
-    #ifdef LINUX
+    #ifdef __linux__
     msgctl(mq_descryptor, IPC_RMID, nullptr);
     #endif
     
@@ -239,7 +239,7 @@ void terminal_reader()
         {
             msg.mtype = SHUTDOWN_PRIOR;
             
-            #ifdef LINUX
+            #ifdef __linux__
             msgsnd(mq_descryptor, &msg, sizeof(msg_t), 0);
             #endif
             

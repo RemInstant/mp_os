@@ -41,7 +41,7 @@ private:
 
 private:
 
-    #ifdef LINUX
+    #ifdef __linux__
     int _mq_descryptor;
     #endif
     

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef LINUX
+#ifdef __linux__
 #include <sys/msg.h>
 #endif
 
@@ -19,7 +19,7 @@ std::mutex server_logger::mutex;
 server_logger::server_logger(std::map<std::string, std::set<severity>> const &log_dest):
     _configuration(log_dest)
 {
-    #ifdef LINUX
+    #ifdef __linux__
     _mq_descryptor = msgget(LINUX_MSG_QUEUE_KEY, 0666);
 	
 	if (_mq_descryptor == -1)
@@ -65,7 +65,7 @@ logger const *server_logger::log(
                 msg.packet_id = i + 1;
                 strcpy(msg.mtext, text.substr(i * MAX_MSG_TEXT_SIZE, MAX_MSG_TEXT_SIZE).c_str());
                 
-                #ifdef LINUX
+                #ifdef __linux__
 	            msgsnd(_mq_descryptor, &msg, sizeof(msg_t), 0);
                 #endif
                 

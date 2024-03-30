@@ -19,7 +19,7 @@ int main(
     path = "D:\\Code\\VSCode\\mp_os\\logger\\server_logger\\tests\\win32_test_log.txt";
     #endif
     
-    #ifdef LINUX
+    #ifdef __linux__
     path = "/home/remi/Code/VSCode/mp_os/logger/server_logger/tests/linux_test_log.txt";
     #endif
     
