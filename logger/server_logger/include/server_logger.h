@@ -4,11 +4,16 @@
 #include <logger.h>
 #include "server_logger_builder.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <set>
 #include <map>
 #include <mutex>
 
-#define LINUX_SERVER_KEY 100
+#define LINUX_MSG_QUEUE_KEY 100
+#define WIN32_MAILSLOT_NAME "\\\\.\\mailslot\\mp_os_srvr_lgr"
 #define MAX_MSG_TEXT_SIZE 1024
 #define LOG_PRIOR 2
 
@@ -36,7 +41,14 @@ private:
 
 private:
 
+    #ifdef LINUX
     int _mq_descryptor;
+    #endif
+    
+    #ifdef _WIN32
+    HANDLE _hFile;
+    #endif
+    
     std::map<std::string, std::set<severity>> _configuration;
 
 private:
