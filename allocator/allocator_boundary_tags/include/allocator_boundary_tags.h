@@ -1,6 +1,8 @@
 #ifndef MATH_PRACTICE_AND_OPERATING_SYSTEMS_ALLOCATOR_ALLOCATOR_BOUNDARY_TAGS_H
 #define MATH_PRACTICE_AND_OPERATING_SYSTEMS_ALLOCATOR_ALLOCATOR_BOUNDARY_TAGS_H
 
+#include <mutex>
+
 #include <allocator_guardant.h>
 #include <allocator_test_utils.h>
 #include <allocator_with_fit_mode.h>
@@ -57,18 +59,34 @@ public:
     inline void set_fit_mode(
         allocator_with_fit_mode::fit_mode mode) override;
 
-private:
-    
-    inline allocator *get_allocator() const override;
-
 public:
     
     std::vector<allocator_test_utils::block_info> get_blocks_info() const noexcept override;
 
 private:
     
+    inline allocator *get_allocator() const override;
+    
     inline logger *get_logger() const override;
-
+    
+    inline std::mutex &get_mutex() const;
+    
+    inline fit_mode get_fit_mode() const;
+    
+    inline block_size_t get_memory_size() const;
+    
+    inline block_pointer_t get_memory_list_head() const;
+    
+    inline size_t get_meta_size() const;
+    
+    inline block_size_t get_block_meta_size() const;
+    
+    inline block_size_t get_block_data_size(block_pointer_t block) const;
+    
+    inline block_pointer_t get_prev_block(block_pointer_t block) const;
+    
+    inline block_pointer_t get_next_block(block_pointer_t block) const;
+    
 private:
     
     inline std::string get_typename() const noexcept override;
