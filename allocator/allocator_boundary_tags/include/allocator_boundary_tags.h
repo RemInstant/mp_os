@@ -26,10 +26,10 @@ public:
     ~allocator_boundary_tags() override;
     
     allocator_boundary_tags(
-        allocator_boundary_tags const &other);
+        allocator_boundary_tags const &other) = delete;
     
     allocator_boundary_tags &operator=(
-        allocator_boundary_tags const &other);
+        allocator_boundary_tags const &other) = delete;
     
     allocator_boundary_tags(
         allocator_boundary_tags &&other) noexcept;
@@ -71,21 +71,23 @@ private:
     
     inline std::mutex &get_mutex() const;
     
-    inline fit_mode get_fit_mode() const;
+    inline fit_mode &get_fit_mode() const;
     
-    inline block_size_t get_memory_size() const;
+    inline block_size_t get_allctr_data_size() const;
     
-    inline block_pointer_t get_memory_list_head() const;
+    inline block_size_t &get_allctr_avail_size() const;
     
-    inline size_t get_meta_size() const;
+    inline block_pointer_t &get_head_block() const;
+    
+    inline size_t get_allctr_meta_size() const;
     
     inline block_size_t get_block_meta_size() const;
     
-    inline block_size_t get_block_data_size(block_pointer_t block) const;
+    inline block_size_t &get_block_data_size(block_pointer_t block) const;
     
-    inline block_pointer_t get_prev_block(block_pointer_t block) const;
+    inline block_pointer_t &get_prev_block(block_pointer_t block) const;
     
-    inline block_pointer_t get_next_block(block_pointer_t block) const;
+    inline block_pointer_t &get_next_block(block_pointer_t block) const;
     
 private:
     

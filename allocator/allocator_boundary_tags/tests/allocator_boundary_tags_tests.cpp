@@ -93,6 +93,8 @@ TEST(positiveTests, test2)
     ASSERT_EQ(actual_blocks_state.size(), expected_blocks_state.size());
     for (int i = 0; i < actual_blocks_state.size(); i++)
     {
+        std::cout << "actual: " << actual_blocks_state[i].block_size << ' ' << actual_blocks_state[i].is_block_occupied << ' ';
+        std::cout << "expected: " << expected_blocks_state[i].block_size << ' ' << expected_blocks_state[i].is_block_occupied << std::endl;
         ASSERT_EQ(actual_blocks_state[i], expected_blocks_state[i]);
     }
     
@@ -127,4 +129,27 @@ int main(
     testing::InitGoogleTest(&argc, argv);
     
     return RUN_ALL_TESTS();
+    
+    logger *logger_instance = create_logger(std::vector<std::pair<std::string, logger::severity>>
+        {
+            {
+                "allocator_boundary_tags_tests_logs_false_positive_test_1.txt",
+                logger::severity::information
+            }
+        });
+    allocator *allocator_instance = new allocator_boundary_tags(sizeof(unsigned char) * 3000, nullptr, logger_instance, allocator_with_fit_mode::fit_mode::first_fit);
+    
+    char *first_block = reinterpret_cast<char *>(allocator_instance->allocate(sizeof(char), 1000));
+    char *second_block = reinterpret_cast<char *>(allocator_instance->allocate(sizeof(char), 0));
+    allocator_instance->deallocate(first_block);
+    first_block = reinterpret_cast<char *>(allocator_instance->allocate(sizeof(char), 999));
+    auto actual_blocks_state = dynamic_cast<allocator_test_utils *>(allocator_instance)->get_blocks_info();
+    
+    for (auto record : actual_blocks_state)
+    {
+        std::cout << record.block_size << ' ' << record.is_block_occupied << std::endl;
+    }
+    
+    //ASSERT_EQ(first_block + 10, second_block);
+    //ASSERT_EQ(second_block + 10, third_block);
 }
