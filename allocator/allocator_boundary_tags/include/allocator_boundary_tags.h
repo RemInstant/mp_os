@@ -65,6 +65,10 @@ public:
 
 private:
     
+    std::vector<allocator_test_utils::block_info> create_blocks_info() const noexcept;
+    
+    void debug_blocks_info(std::string call_function_name) const;
+    
     inline allocator *get_allocator() const override;
     
     inline logger *get_logger() const override;
@@ -84,6 +88,8 @@ private:
     inline block_size_t get_block_meta_size() const;
     
     inline block_size_t &get_block_data_size(block_pointer_t block) const;
+    
+    inline allocator *&get_block_allctr(block_pointer_t block) const;
     
     inline block_pointer_t &get_prev_block(block_pointer_t block) const;
     
