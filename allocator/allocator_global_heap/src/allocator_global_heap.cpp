@@ -51,8 +51,8 @@ allocator_global_heap &allocator_global_heap::operator=(
     size_t value_size,
     size_t values_count)
 {
-    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : called.");
-    debug_with_guard(get_typename() + "::allocate(size_t, size_t) : called. (value size = " +
+    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : called.")
+        ->debug_with_guard(get_typename() + "::allocate(size_t, size_t) : called. (value size = " +
             std::to_string(value_size) + "; count = " + std::to_string(values_count) + ").");
     
     unsigned char *ptr = nullptr;
@@ -73,8 +73,8 @@ allocator_global_heap &allocator_global_heap::operator=(
     *reinterpret_cast<allocator_global_heap**>(ptr) = this;
     *reinterpret_cast<size_t*>(ptr + sizeof(allocator_global_heap*)) = size;
     
-    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
-    debug_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
+    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.")
+        ->debug_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
     
     return reinterpret_cast<void*>(ptr + sizeof(allocator_global_heap*) + sizeof(size_t));
 }
@@ -82,35 +82,31 @@ allocator_global_heap &allocator_global_heap::operator=(
 void allocator_global_heap::deallocate(
     void *at)
 {
-    trace_with_guard(get_typename() + "::deallocate(void *) : called.");
-    debug_with_guard(get_typename() + "::deallocate(void *) : called.");
+    trace_with_guard(get_typename() + "::deallocate(void *) : called.")
+        ->debug_with_guard(get_typename() + "::deallocate(void *) : called.");
     
     auto ptr = reinterpret_cast<unsigned char*>(at);
     
-    if (*reinterpret_cast<allocator_global_heap**>(
-            ptr - sizeof(allocator_global_heap*) - sizeof(size_t)) != this)
+    ptr -= sizeof(size_t);
+    size_t size = *reinterpret_cast<size_t*>(ptr);
+    
+    ptr -= sizeof(allocator_global_heap*);
+    allocator_global_heap* allctr_ptr = *reinterpret_cast<allocator_global_heap**>(ptr);
+    
+    if (allctr_ptr != this)
     {
         error_with_guard(get_typename() + "::deallocate(void *) : tried to deallocate non-related memory.");
         throw std::logic_error("try of deallocation non-related memory");
     }
     
-    size_t size = *reinterpret_cast<size_t*>(ptr - sizeof(size_t));
-    
-    std::ostringstream str_stream(size > 0 ? " with data:" : "", std::ios::ate);
-    str_stream << std::hex << std::setfill('0');
-    
-    for (size_t i = 0; i < size; ++i)
-    {
-        str_stream << " 0x" << std::setw(2) << static_cast<unsigned int>(*(ptr + i));
-    }
-    
-    debug_with_guard(get_typename() + "::deallocate(void *): deallocated " +
-            std::to_string(size) + " bytes" + str_stream.str() + ".");
+    std::string dump = get_block_dump(at, size);
     
     ::operator delete(ptr);
     
-    trace_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
-    debug_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
+    debug_with_guard(get_typename() + "::deallocate(void *): deallocated " +
+            std::to_string(size) + " bytes" + (!dump.size() ? "" : " with data " + dump) + ".")
+        ->trace_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.")
+        ->debug_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
 }
 
 inline logger *allocator_global_heap::get_logger() const

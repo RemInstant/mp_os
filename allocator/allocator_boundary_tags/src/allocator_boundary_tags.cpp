@@ -97,7 +97,7 @@ allocator_boundary_tags::allocator_boundary_tags(
     ptr += sizeof(class logger*);
     
     new(reinterpret_cast<std::mutex*>(ptr)) std::mutex();
-    ptr += sizeof(std::mutex*);
+    ptr += sizeof(std::mutex);
     
     *reinterpret_cast<fit_mode*>(ptr) = allocate_fit_mode;
     ptr += sizeof(fit_mode);
@@ -119,9 +119,9 @@ allocator_boundary_tags::allocator_boundary_tags(
     size_t value_size,
     size_t values_count)
 {
-    get_mutex().lock();
-    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : called.");
-    debug_with_guard(get_typename() + "::allocate(size_t, size_t) was called (value_size = " +
+    std::lock_guard<std::mutex> guard(get_mutex());
+    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : called.")
+        ->debug_with_guard(get_typename() + "::allocate(size_t, size_t) was called (value_size = " +
             std::to_string(value_size) + ", values_count = " + std::to_string(values_count) + ").");
     
     block_size_t req_size = value_size * values_count;
@@ -170,8 +170,8 @@ allocator_boundary_tags::allocator_boundary_tags(
         size = r_border - l_border;
         
         if ((size >= cmn_size) && (target_block == nullptr ||
-            (get_fit_mode() == fit_mode::the_best_fit && (size - req_size < target_size - req_size)) ||
-            (get_fit_mode() == fit_mode::the_worst_fit && (size - req_size > target_size - req_size))))
+            (get_fit_mode() == fit_mode::the_best_fit && (size - cmn_size < target_size - cmn_size)) ||
+            (get_fit_mode() == fit_mode::the_worst_fit && (size - cmn_size > target_size - cmn_size))))
         {
             target_prev = cur_block;
             target_block = reinterpret_cast<block_pointer_t>(reinterpret_cast<unsigned char*>(
@@ -186,8 +186,6 @@ allocator_boundary_tags::allocator_boundary_tags(
     {
         error_with_guard(get_typename() + "::allocate(size_t, size_t) : no space to allocate requested " +
                 std::to_string(req_size) + " bytes.");
-        get_mutex().unlock();
-    
         throw std::bad_alloc();
     }
     
@@ -231,10 +229,9 @@ allocator_boundary_tags::allocator_boundary_tags(
             "(+" + std::to_string(get_block_meta_size()) + ") bytes.");
     debug_blocks_info(get_typename() + "::allocate(size_t, size_t)");
     information_with_guard(get_typename() + "::allocate(size_t, size_t) : available size is " +
-            std::to_string(get_allctr_avail_size()) + " bytes.");
-    trace_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
-    debug_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
-    get_mutex().unlock();
+            std::to_string(get_allctr_avail_size()) + " bytes.")
+        ->trace_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.")
+        ->debug_with_guard(get_typename() + "::allocate(size_t, size_t) : successfuly finished.");
     
     return target_block;
 }
@@ -242,9 +239,9 @@ allocator_boundary_tags::allocator_boundary_tags(
 void allocator_boundary_tags::deallocate(
     void *at)
 {
-    get_mutex().lock();
-    trace_with_guard(get_typename() + "::deallocate(void *) : called.");
-    debug_with_guard(get_typename() + "::deallocate(void *) : called.");
+    std::lock_guard<std::mutex> guard(get_mutex());
+    trace_with_guard(get_typename() + "::deallocate(void *) : called.")
+        ->debug_with_guard(get_typename() + "::deallocate(void *) : called.");
     
     if (at == nullptr)
     {
@@ -258,24 +255,14 @@ void allocator_boundary_tags::deallocate(
     
     if (at < mem_begin || at >= mem_end || get_block_allctr(at) != this)
     {
-        error_with_guard(get_typename() + "::deallocate(void *) : tried to deallocate non-related memory.");
-        get_mutex().unlock();
-        
+        error_with_guard(get_typename() + "::deallocate(void *) : tried to deallocate non-related memory.");        
         throw std::logic_error("try of deallocation non-related memory");
     }
     
     block_size_t size = get_block_data_size(at);
     block_pointer_t prev_block = get_prev_block(at);
     block_pointer_t next_block = get_next_block(at);
-    
-    if (prev_block && (prev_block < mem_begin || prev_block >= mem_end) ||
-        next_block && (next_block < mem_begin || next_block >= mem_end))
-    {
-        error_with_guard(get_typename() + "::deallocate(void *) : pointer does not point on allocated memory.");
-        get_mutex().unlock();
-        
-        throw std::logic_error("try of deallocation not allocated memory");
-    }
+    std::string dump = get_block_dump(at, size);
     
     if (prev_block == nullptr)
     {
@@ -293,23 +280,14 @@ void allocator_boundary_tags::deallocate(
     
     get_allctr_avail_size() += get_block_meta_size() + size;
     
-    std::ostringstream str_stream(size > 0 ? " with data:" : "", std::ios::ate);
-    str_stream << std::hex << std::setfill('0');
-    
-    for (size_t i = 0; i < size; ++i)
-    {
-        str_stream << " 0x" << std::setw(2) << static_cast<unsigned int>(
-                *reinterpret_cast<unsigned char*>(at) + i);
-    }
-    
     debug_with_guard(get_typename() + "::deallocate(void *) : deallocated " + std::to_string(size)
-            + "(+" + std::to_string(get_block_meta_size()) + ") bytes" + str_stream.str() + ".");
+            + "(+" + std::to_string(get_block_meta_size()) + ") bytes" + (!dump.size() ?
+            "" : " with data " + dump) + ".");
     debug_blocks_info(get_typename() + "::deallocate(void *)");
     information_with_guard(get_typename() + "::deallocate(void *) : available size is " +
-            std::to_string(get_allctr_avail_size()) + " bytes.");
-    trace_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
-    debug_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
-    get_mutex().unlock();
+            std::to_string(get_allctr_avail_size()) + " bytes.")
+        ->trace_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.")
+        ->debug_with_guard(get_typename() + "::deallocate(void *) : successfuly finished.");
 }
 
 inline void allocator_boundary_tags::set_fit_mode(
@@ -320,13 +298,12 @@ inline void allocator_boundary_tags::set_fit_mode(
 
 std::vector<allocator_test_utils::block_info> allocator_boundary_tags::get_blocks_info() const noexcept
 {
-    get_mutex().lock();
+    std::lock_guard<std::mutex> guard(get_mutex());
     trace_with_guard(get_typename() + "::get_blocks_info() : called.");
     
     auto blocks_info = create_blocks_info();
     
     trace_with_guard(get_typename() + "::get_blocks_info() : successfuly finished.");
-    get_mutex().unlock();
     
     return blocks_info;
 }
