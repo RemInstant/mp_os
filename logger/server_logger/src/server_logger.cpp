@@ -20,9 +20,9 @@ server_logger::server_logger(std::map<std::string, std::set<severity>> const &lo
     _configuration(log_dest)
 {
     #ifdef __linux__
-    _mq_descryptor = msgget(LINUX_MSG_QUEUE_KEY, 0666);
+    _mq_descriptor = msgget(LINUX_MSG_QUEUE_KEY, 0666);
 	
-	if (_mq_descryptor == -1)
+	if (_mq_descriptor == -1)
 	{
         throw std::runtime_error("Cannot connect to the server");
 	}
@@ -30,7 +30,7 @@ server_logger::server_logger(std::map<std::string, std::set<severity>> const &lo
     
     #ifdef _WIN32
     _hFile = CreateFile(WIN32_MAILSLOT_NAME, GENERIC_WRITE, FILE_SHARE_READ,
-            (LPSECURITY_ATTRIBUTES) NULL,OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, (HANDLE) NULL);
+            (LPSECURITY_ATTRIBUTES) NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, (HANDLE) NULL);
     
     if (_hFile == INVALID_HANDLE_VALUE)
     {
@@ -66,7 +66,7 @@ logger const *server_logger::log(
                 strcpy(msg.mtext, text.substr(i * MAX_MSG_TEXT_SIZE, MAX_MSG_TEXT_SIZE).c_str());
                 
                 #ifdef __linux__
-	            msgsnd(_mq_descryptor, &msg, sizeof(msg_t), 0);
+	            msgsnd(_mq_descriptor, &msg, sizeof(msg_t), 0);
                 #endif
                 
                 #ifdef _WIN32

@@ -29,7 +29,7 @@ int run_flag = 1;
 
 #include <sys/msg.h>
 
-int mq_descryptor = -1;
+int mq_descriptor = -1;
 
 #endif
 
@@ -53,8 +53,8 @@ int main()
     std::map<std::string, std::ofstream> streams;
     
     #ifdef __linux__
-    mq_descryptor = msgget(LINUX_MSG_QUEUE_KEY, IPC_CREAT | 0666);
-    if (mq_descryptor == -1)
+    mq_descriptor = msgget(LINUX_MSG_QUEUE_KEY, IPC_CREAT | 0666);
+    if (mq_descriptor == -1)
     {
         std::cout << "Cannot create the queue. Shut down." << std::endl;
         return 1;
@@ -77,7 +77,7 @@ int main()
     while (run_flag)
     {
         #ifdef __linux__
-        ssize_t rcv_cnt = msgrcv(mq_descryptor, &msg, max_msg_size, 0, MSG_NOERROR);
+        ssize_t rcv_cnt = msgrcv(mq_descriptor, &msg, max_msg_size, 0, MSG_NOERROR);
         if (rcv_cnt == -1)
         {
             std::cout << "An error occured while receiving the message" << std::endl;
@@ -193,7 +193,7 @@ int main()
     }
     
     #ifdef __linux__
-    msgctl(mq_descryptor, IPC_RMID, nullptr);
+    msgctl(mq_descriptor, IPC_RMID, nullptr);
     #endif
     
     #ifdef _WIN32
@@ -240,7 +240,7 @@ void terminal_reader()
             msg.mtype = SHUTDOWN_PRIOR;
             
             #ifdef __linux__
-            msgsnd(mq_descryptor, &msg, sizeof(msg_t), 0);
+            msgsnd(mq_descriptor, &msg, sizeof(msg_t), 0);
             #endif
             
             run_flag = 0;
@@ -268,7 +268,7 @@ bool read_win32_slot(HANDLE hSlot, msg_t &msg)
     ov.OffsetHigh = 0;
     ov.hEvent = hEvent;
     
-    // slot descryptor, max msg size, next msg size, msg cnt, read timeout
+    // slot descriptor, max msg size, next msg size, msg cnt, read timeout
     fResult = GetMailslotInfo(hSlot, (LPDWORD) NULL, &next_msg_size, &msg_cnt, (LPDWORD) NULL);
     
     if (!fResult)
@@ -283,7 +283,7 @@ bool read_win32_slot(HANDLE hSlot, msg_t &msg)
         return false;
     }
     
-    // slot descryptor, buffer, size, byte cnt, overlapped obj
+    // slot descriptor, buffer, size, byte cnt, overlapped obj
     fResult = ReadFile(hSlot, &msg, next_msg_size, (LPDWORD) NULL, &ov);
     
     if (!fResult) 

@@ -42,7 +42,7 @@ private:
 private:
 
     #ifdef __linux__
-    int _mq_descryptor;
+    int _mq_descriptor;
     #endif
     
     #ifdef _WIN32
