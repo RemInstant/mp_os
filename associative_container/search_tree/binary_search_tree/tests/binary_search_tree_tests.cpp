@@ -96,7 +96,8 @@ bool infix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        //if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value())
         {
             return false;
         }
@@ -119,7 +120,8 @@ bool prefix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        //if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value())
         {
             return false;
         }
@@ -143,7 +145,8 @@ bool postfix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        //if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value())
         {
             return false;
         }
@@ -606,4 +609,112 @@ int main(
     testing::InitGoogleTest(&argc, argv);
     
     return RUN_ALL_TESTS();
+    
+    binary_search_tree<std::string, std::string> *bst = new binary_search_tree<std::string, std::string>(key_comparer(), nullptr, nullptr);
+    
+    bst->set_insertion_strategy(binary_search_tree<std::string, std::string>::insertion_of_existent_key_attempt_strategy::throw_an_exception);
+    
+    bst->insert("5", "5");
+    bst->insert("3", "3");
+    bst->insert("1", "1");
+    bst->insert("2", "2");
+    bst->insert("4", "4");
+    bst->insert("7", "7");
+    bst->insert("6", "6");
+    bst->insert("9", "9");
+    bst->insert("8", "8");
+    
+    std::cout << "Prefix iterator" << std::endl;
+    
+    std::cout << "  i: ";
+    for (auto iter = bst->begin_prefix(); iter != bst->end_prefix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "c i: ";
+    for (auto iter = bst->cbegin_prefix(); iter != bst->cend_prefix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << " ri: ";
+    for (auto iter = bst->rbegin_prefix(); iter != bst->rend_prefix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "cri: ";
+    for (auto iter = bst->crbegin_prefix(); iter != bst->crend_prefix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    
+    std::cout << std::endl << "Prefix iterator" << std::endl;
+    
+    std::cout << "  i: ";
+    for (auto iter = bst->begin_infix(); iter != bst->end_infix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "c i: ";
+    for (auto iter = bst->cbegin_infix(); iter != bst->cend_infix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << " ri: ";
+    for (auto iter = bst->rbegin_infix(); iter != bst->rend_infix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "cri: ";
+    for (auto iter = bst->crbegin_infix(); iter != bst->crend_infix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "Postfix iterator" << std::endl;
+    
+    std::cout << "  i: ";
+    for (auto iter = bst->begin_postfix(); iter != bst->end_postfix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "c i: ";
+    for (auto iter = bst->cbegin_postfix(); iter != bst->cend_postfix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << " ri: ";
+    for (auto iter = bst->rbegin_postfix(); iter != bst->rend_postfix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "cri: ";
+    for (auto iter = bst->crbegin_postfix(); iter != bst->crend_postfix(); ++iter)
+    {
+        std::cout << (*iter)->get_value() << ' ';
+    }
+    
+    std::cout << std::endl << "Between" << std::endl;
+    
+    auto range = bst->obtain_between("4", "6", true, true);
+    for (auto pair : range)
+    {
+        std::cout << pair.key << ' ';
+    }
+    
+    std::cout << std::endl;
+    range = bst->obtain_between("2", "8", false, false);
+    for (auto pair : range)
+    {
+        std::cout << pair.key << ' ';
+    }
 }
