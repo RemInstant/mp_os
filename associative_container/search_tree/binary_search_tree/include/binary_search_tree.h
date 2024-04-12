@@ -4008,13 +4008,13 @@ void binary_search_tree<tkey, tvalue>::double_left_rotation(
     
     if (at_grandparent_first)
     {
-        small_left_rotation(subtree_root);
-        small_left_rotation(subtree_root);
+        small_left_rotation(subtree_root, false);
+        small_left_rotation(subtree_root, false);
     }
     else
     {
-        small_left_rotation(subtree_root->right);
-        small_left_rotation(subtree_root);
+        small_left_rotation(subtree_root->right, false);
+        small_left_rotation(subtree_root, false);
     }
 }
 
@@ -4034,13 +4034,13 @@ void binary_search_tree<tkey, tvalue>::double_right_rotation(
     
     if (at_grandparent_first)
     {
-        small_left_rotation(subtree_root);
-        small_left_rotation(subtree_root);
+        small_left_rotation(subtree_root, false);
+        small_left_rotation(subtree_root, false);
     }
     else
     {
-        small_left_rotation(subtree_root->left);
-        small_left_rotation(subtree_root);
+        small_left_rotation(subtree_root->left, false);
+        small_left_rotation(subtree_root, false);
     }
 }
 
