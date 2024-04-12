@@ -15,9 +15,21 @@ private:
     struct node final:
         binary_search_tree<tkey, tvalue>::node
     {
-        
-        // TODO: think about it!
-        
+
+    public:
+    
+        size_t subtree_height;
+    
+    public:
+    
+        explicit node(
+            tkey const &key,
+            tvalue const &value);
+    
+        explicit node(
+            tkey const &key,
+            tvalue &&value);
+    
     };
 
 public:
@@ -26,9 +38,13 @@ public:
         public binary_search_tree<tkey, tvalue>::iterator_data
     {
     
-    public:
+    protected:
         
         size_t subtree_height;
+    
+    public:
+    
+        size_t get_subtree_height() const;
     
     public:
         
@@ -37,10 +53,13 @@ public:
             tkey const &key,
             tvalue const &value,
             size_t subtree_height);
-        
+    
     };
 
 private:
+    
+    void balance(
+        std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path);
     
     class insertion_template_method final:
         public binary_search_tree<tkey, tvalue>::insertion_template_method
@@ -54,20 +73,8 @@ private:
     
     private:
         
-        // TODO: think about it!
-        
-    };
-    
-    class obtaining_template_method final:
-        public binary_search_tree<tkey, tvalue>::obtaining_template_method
-    {
-    
-    public:
-        
-        explicit obtaining_template_method(
-            AVL_tree<tkey, tvalue> *tree);
-        
-        // TODO: think about it!
+        void balance(
+            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
         
     };
     
@@ -81,7 +88,10 @@ private:
             AVL_tree<tkey, tvalue> *tree,
             typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
         
-        // TODO: think about it!
+    private:
+    
+        void balance(
+            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
         
     };
 
@@ -90,8 +100,10 @@ public:
     explicit AVL_tree(
         allocator *allocator = nullptr,
         logger *logger = nullptr,
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy = binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy = binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
+        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
     
@@ -127,6 +139,15 @@ AVL_tree<tkey, tvalue>::iterator_data::iterator_data(
 template<
     typename tkey,
     typename tvalue>
+void AVL_tree<tkey, tvalue>::balance(
+    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+{
+    throw not_implemented("template<typename tkey, typename tvalue> void AVL_tree<tkey, tvalue>::balance", "your code should be here...");
+}
+
+template<
+    typename tkey,
+    typename tvalue>
 AVL_tree<tkey, tvalue>::insertion_template_method::insertion_template_method(
     AVL_tree<tkey, tvalue> *tree,
     typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy):
@@ -138,10 +159,10 @@ AVL_tree<tkey, tvalue>::insertion_template_method::insertion_template_method(
 template<
     typename tkey,
     typename tvalue>
-AVL_tree<tkey, tvalue>::obtaining_template_method::obtaining_template_method(
-    AVL_tree<tkey, tvalue> *tree)
+void AVL_tree<tkey, tvalue>::insertion_template_method::balance(
+    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
 {
-    throw not_implemented("template<typename tkey, typename tvalue> AVL_tree<tkey, tvalue>::obtaining_template_method::obtaining_template_method(AVL_tree<tkey, tvalue> *)", "your code should be here...");
+    dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
 
 template<
@@ -152,6 +173,15 @@ AVL_tree<tkey, tvalue>::disposal_template_method::disposal_template_method(
     typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy)
 {
     throw not_implemented("template<typename tkey, typename tvalue> AVL_tree<tkey, tvalue>::disposal_template_method::disposal_template_method(AVL_tree<tkey, tvalue> *, typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy)", "your code should be here...");
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+void AVL_tree<tkey, tvalue>::insertion_template_method::balance(
+    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+{
+    dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
 
 template<
