@@ -733,9 +733,7 @@ protected:
         public allocator_guardant
     {
     
-        friend class binary_search_tree<tkey, tvalue>; // TODO: DELETE
-    
-    private:
+    public:
         
         binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy _insertion_strategy;
     
@@ -754,9 +752,6 @@ protected:
         void insert(
             tkey const &key,
             tvalue &&value);
-    
-        void set_insertion_strategy(
-            typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept;
     
     private:
         
@@ -791,9 +786,7 @@ protected:
         public allocator_guardant
     {
     
-        friend class binary_search_tree<tkey, tvalue>; // TODO: DELETE
-    
-    private:
+    public:
         
         binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy _disposal_strategy;
     
@@ -807,9 +800,6 @@ protected:
         
         tvalue dispose(
             tkey const &key);
-        
-        void set_disposal_strategy(
-            typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
     
     private:
         
@@ -920,7 +910,7 @@ public:
     void set_insertion_strategy(
         typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept;
     
-    void set_removal_strategy(
+    void set_disposal_strategy(
         typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
 
 public:
@@ -1500,7 +1490,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::iterator::iterator(
     iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -1525,7 +1515,7 @@ typename binary_search_tree<tkey, tvalue>::iterator &binary_search_tree<tkey, tv
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -1600,7 +1590,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::prefix_iterator::prefix_iterator(
     prefix_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -1611,7 +1601,7 @@ typename binary_search_tree<tkey, tvalue>::prefix_iterator &binary_search_tree<t
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -1625,7 +1615,7 @@ typename binary_search_tree<tkey, tvalue>::prefix_iterator &binary_search_tree<t
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -1723,7 +1713,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::prefix_const_iterator::prefix_const_iterator(
     prefix_const_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -1748,7 +1738,7 @@ typename binary_search_tree<tkey, tvalue>::prefix_const_iterator &binary_search_
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -1846,7 +1836,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::prefix_reverse_iterator::prefix_reverse_iterator(
     prefix_reverse_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -1871,7 +1861,7 @@ typename binary_search_tree<tkey, tvalue>::prefix_reverse_iterator &binary_searc
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -1969,7 +1959,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator::prefix_const_reverse_iterator(
     prefix_const_reverse_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -1994,7 +1984,7 @@ typename binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator &binary
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2092,7 +2082,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::infix_iterator::infix_iterator(
     infix_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -2117,7 +2107,7 @@ typename binary_search_tree<tkey, tvalue>::infix_iterator &binary_search_tree<tk
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2212,7 +2202,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::infix_const_iterator::infix_const_iterator(
     infix_const_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -2237,7 +2227,7 @@ typename binary_search_tree<tkey, tvalue>::infix_const_iterator &binary_search_t
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2332,7 +2322,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::infix_reverse_iterator::infix_reverse_iterator(
     infix_reverse_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -2357,7 +2347,7 @@ typename binary_search_tree<tkey, tvalue>::infix_reverse_iterator &binary_search
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2452,7 +2442,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator::infix_const_reverse_iterator(
     infix_const_reverse_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -2477,7 +2467,7 @@ typename binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator &binary_
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2574,7 +2564,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::postfix_iterator::postfix_iterator(
     postfix_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -2599,7 +2589,7 @@ typename binary_search_tree<tkey, tvalue>::postfix_iterator &binary_search_tree<
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2694,7 +2684,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::postfix_const_iterator::postfix_const_iterator(
     postfix_const_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -2719,7 +2709,7 @@ typename binary_search_tree<tkey, tvalue>::postfix_const_iterator &binary_search
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2814,7 +2804,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::postfix_reverse_iterator::postfix_reverse_iterator(
     postfix_reverse_iterator &&other) noexcept:
-        iterator(other)
+        iterator(std::move(other))
 { }
 
 template<
@@ -2839,7 +2829,7 @@ typename binary_search_tree<tkey, tvalue>::postfix_reverse_iterator &binary_sear
 {
     if (*this != other)
     {
-        iterator::operator=(other);
+        iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -2934,7 +2924,7 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::postfix_const_reverse_iterator(
     postfix_const_reverse_iterator &&other) noexcept:
-        const_iterator(other)
+        const_iterator(std::move(other))
 { }
 
 template<
@@ -2959,7 +2949,7 @@ typename binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator &binar
 {
     if (*this != other)
     {
-        const_iterator::operator=(other);
+        const_iterator::operator=(std::move(other));
     }
     
     return *this;
@@ -3195,15 +3185,6 @@ void binary_search_tree<tkey, tvalue>::insertion_template_method::insert(
 template<
     typename tkey,
     typename tvalue>
-void binary_search_tree<tkey, tvalue>::insertion_template_method::set_insertion_strategy(
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept
-{
-    _insertion_strategy = insertion_strategy;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
 allocator *binary_search_tree<tkey, tvalue>::insertion_template_method::get_allocator() const noexcept
 {
     return this->_tree->get_allocator();
@@ -3376,15 +3357,6 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
 template<
     typename tkey,
     typename tvalue>
-void binary_search_tree<tkey, tvalue>::disposal_template_method::set_disposal_strategy(
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
-{
-    _disposal_strategy = disposal_strategy;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
 [[nodiscard]] inline allocator *binary_search_tree<tkey, tvalue>::disposal_template_method::get_allocator() const noexcept
 {
     return this->_tree->get_allocator();
@@ -3469,9 +3441,9 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
     binary_search_tree<tkey, tvalue> &&other) noexcept:
     search_tree<tkey, tvalue>(other._keys_comparer, other.get_logger(), other.get_allocator(), other._root)
 {
-    _insertion_template = other._insertion_template;
-    _obtaining_template = other._obtaining_template;
-    _disposal_template = other._disposal_template;
+    _insertion_template = std::move(other._insertion_template);
+    _obtaining_template = std::move(other._obtaining_template);
+    _disposal_template = std::move(other._disposal_template);
     
     other._logger = nullptr;
     other._allocator = nullptr;
@@ -3515,14 +3487,14 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
     {
         this->~binary_search_tree();
         
-        this->_keys_comparer = other._keys_comparer;
-        this->_logger = other._logger;
-        this->_allocator = other._allocator;
+        this->_keys_comparer = std::move(other._keys_comparer);
+        this->_logger = std::move(other._logger);
+        this->_allocator = std::move(other._allocator);
         
-        _insertion_template = other._insertion_template;
-        _obtaining_template = other._obtaining_template;
-        _disposal_template = other._disposal_template;
-        this->_root = other._root;
+        _insertion_template = std::move(other._insertion_template);
+        _obtaining_template = std::move(other._obtaining_template);
+        _disposal_template = std::move(other._disposal_template);
+        this->_root = std::move(other._root);
         
         other._logger = nullptr;
         other._allocator = nullptr;
@@ -3627,7 +3599,7 @@ inline void binary_search_tree<tkey, tvalue>::call_node_constructor(
     tkey const &key,
     tvalue &&value)
 {
-    allocator::construct(raw_space, key, std::forward<tvalue>(value));
+    allocator::construct(raw_space, key, std::move(value));
 }
 
 template<
@@ -3718,16 +3690,16 @@ template<
 void binary_search_tree<tkey, tvalue>::set_insertion_strategy(
     typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept
 {
-    _insertion_template->set_insertion_strategy(insertion_strategy);
+    _insertion_template->_insertion_strategy = insertion_strategy;
 }
 
 template<
     typename tkey,
     typename tvalue>
-void binary_search_tree<tkey, tvalue>::set_removal_strategy(
+void binary_search_tree<tkey, tvalue>::set_disposal_strategy(
     typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
 {
-    _disposal_template->set_disposal_strategy(disposal_strategy);
+    _disposal_template->_disposal_strategy = disposal_strategy;
 }
 
 #pragma region iterators requesting implementation
