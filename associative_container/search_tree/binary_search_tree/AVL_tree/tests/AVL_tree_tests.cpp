@@ -100,8 +100,12 @@ bool infix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
-            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        std::cout << (*it)->get_depth() << ' ' << (*it)->get_key() << ' ' << (*it)->get_value() << ' ' <<
+            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->get_subtree_height() << std::endl;
+        // if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
+        //     reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value() ||
+            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->get_subtree_height() != item.get_subtree_height())
         {
             return false;
         }
@@ -124,8 +128,10 @@ bool prefix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
-            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        // if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
+        //     reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value() ||
+            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->get_subtree_height() != item.get_subtree_height())
         {
             return false;
         }
@@ -147,8 +153,12 @@ bool postfix_iterator_test(
     
     for (auto const &item: expected_result)
     {
-        if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
-            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        std::cout << (*it)->get_depth() << ' ' << (*it)->get_key() << ' ' << (*it)->get_value() << ' ' <<
+            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->get_subtree_height() << std::endl;
+        // if ((*it)->depth != item.depth || (*it)->key != item.key || (*it)->value != item.value ||
+        //     reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->subtree_height != item.subtree_height)
+        if ((*it)->get_depth() != item.get_depth() || (*it)->get_key() != item.get_key() || (*it)->get_value() != item.get_value() ||
+            reinterpret_cast<typename AVL_tree<tkey, tvalue>::iterator_data const *>(*it)->get_subtree_height() != item.get_subtree_height())
         {
             return false;
         }
@@ -169,7 +179,7 @@ TEST(AVLTreePositiveTests, test1)
     
     logger->trace("AVLTreePositiveTests.test1 started");
     
-    search_tree<int, std::string> *avl = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl->insert(5, "a");
     avl->insert(2, "b");
@@ -208,7 +218,7 @@ TEST(AVLTreePositiveTests, test2)
     
     logger->trace("AVLTreePositiveTests.test2 started");
     
-    search_tree<int, int> *avl = new AVL_tree<int, int>(nullptr, logger);
+    search_tree<int, int> *avl = new AVL_tree<int, int>(key_comparer(), nullptr, logger);
     
     avl->insert(1, 5);
     avl->insert(2, 12);
@@ -245,7 +255,7 @@ TEST(AVLTreePositiveTests, test3)
     
     logger->trace("AVLTreePositiveTests.test3 started");
     
-    search_tree<std::string, int> *avl = new AVL_tree<std::string, int>(nullptr, logger);
+    search_tree<std::string, int> *avl = new AVL_tree<std::string, int>(key_comparer(), nullptr, logger);
     
     avl->insert("a", 1);
     avl->insert("b", 2);
@@ -282,7 +292,7 @@ TEST(AVLTreePositiveTests, test4)
     
     logger->trace("AVLTreePositiveTests.test4 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -323,7 +333,7 @@ TEST(AVLTreePositiveTests, test5)
     
     logger->trace("AVLTreePositiveTests.test5 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -364,7 +374,7 @@ TEST(AVLTreePositiveTests, test6)
     
     logger->trace("AVLTreePositiveTests.test6 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -404,7 +414,7 @@ TEST(AVLTreePositiveTests, test7)
     
     logger->trace("AVLTreePositiveTests.test7 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -420,7 +430,7 @@ TEST(AVLTreePositiveTests, test7)
         {
             AVL_tree<int, std::string>::iterator_data(2, 2, "l", 1),
             AVL_tree<int, std::string>::iterator_data(1, 4, "j", 2),
-            AVL_tree<int, std::string>::iterator_data(1, 5, "b", 1),
+            AVL_tree<int, std::string>::iterator_data(2, 5, "b", 1), // there was a misprint
             AVL_tree<int, std::string>::iterator_data(0, 6, "a", 3),
             AVL_tree<int, std::string>::iterator_data(1, 8, "c", 2),
             AVL_tree<int, std::string>::iterator_data(2, 15, "x", 1)
@@ -447,7 +457,7 @@ TEST(AVLTreePositiveTests, test8)
     
     logger->trace("AVLTreePositiveTests.test8 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -491,7 +501,7 @@ TEST(AVLTreePositiveTests, test9)
     
     logger->trace("AVLTreePositiveTests.test9 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "a");
     avl1->insert(8, "c");
@@ -536,7 +546,7 @@ TEST(AVLTreePositiveTests, test10)
     
     logger->trace("AVLTreePositiveTests.test10 started");
     
-    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl1 = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl1->insert(6, "l");
     avl1->insert(8, "c");
@@ -583,7 +593,7 @@ TEST(AVLTreePositiveTests, test11)
     
     logger->trace("AVLTreePositiveTests.test11 started");
     
-    search_tree<int, std::string> *avl = new AVL_tree<int, std::string>(nullptr, logger);
+    search_tree<int, std::string> *avl = new AVL_tree<int, std::string>(key_comparer(), nullptr, logger);
     
     avl->insert(6, "l");
     avl->insert(8, "c");

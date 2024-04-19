@@ -59,8 +59,8 @@ protected:
     
     explicit search_tree(
         std::function<int(tkey const &, tkey const &)> keys_comparer = std::less<tkey>(),
-        logger *logger = nullptr,
         allocator *allocator = nullptr,
+        logger *logger = nullptr,
         void *_root = nullptr);
     
 public:
@@ -104,12 +104,12 @@ template<
     typename tvalue>
 search_tree<tkey, tvalue>::search_tree(
     std::function<int(tkey const &, tkey const &)> keys_comparer,
-    logger *logger,
     allocator *allocator,
+    logger *logger,
     void *root):
         _keys_comparer(keys_comparer),
-        _logger(logger),
         _allocator(allocator),
+        _logger(logger),
         _root(root)
 { }
 
