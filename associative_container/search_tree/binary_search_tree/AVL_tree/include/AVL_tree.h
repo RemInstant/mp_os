@@ -2,7 +2,6 @@
 #define MATH_PRACTICE_AND_OPERATING_SYSTEMS_AVL_TREE_H
 
 #include <binary_search_tree.h>
-#include <typename_holder.h>
 #include <extra_utility.h>
 
 template<
@@ -45,7 +44,7 @@ public:
            typename binary_search_tree<tkey, tvalue>::iterator_data *,
            typename binary_search_tree<tkey, tvalue>::node *) const;
     
-    protected:
+    private:
         
         unsigned int _subtree_height;
     
@@ -88,6 +87,7 @@ private:
     void balance(
         std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path);
     
+    
     class insertion_template_method final:
         public binary_search_tree<tkey, tvalue>::insertion_template_method
     {
@@ -101,8 +101,13 @@ private:
     private:
         
         void balance(
-            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
-        
+            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+            typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
+    
+    private:
+    
+        inline std::string get_typename() const noexcept override;
+    
     };
     
     class disposal_template_method final:
@@ -118,14 +123,19 @@ private:
     private:
     
         void balance(
-            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path) override;
-        
+            std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+            typename binary_search_tree<tkey, tvalue>::node* node_to_dispose = nullptr) override;
+    
+    private:
+    
+        inline std::string get_typename() const noexcept override;
+    
     };
 
 public:
     
     explicit AVL_tree(
-        std::function<int(tkey const &, tkey const &)> comparer = std::less<tkey>(), // TODO: fix default comparer
+        std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
         typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
@@ -153,7 +163,8 @@ private:
 
     inline size_t get_node_size() const noexcept override;
 
-    inline void update_node_data(typename binary_search_tree<tkey,tvalue>::node *node) const noexcept override;
+    inline void update_node_data(
+        typename binary_search_tree<tkey,tvalue>::node *node) const noexcept override;
 
     inline void call_node_constructor(
         typename binary_search_tree<tkey,tvalue>::node *raw_space,
@@ -175,13 +186,15 @@ private:
         unsigned int depth,
         typename binary_search_tree<tkey,tvalue>::node *&src_node) const override;
 
-    static inline unsigned int get_subtree_height(typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
+    static inline unsigned int get_subtree_height(
+        typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
 
 private:
 
     inline std::string get_typename() const noexcept override;
 
 };
+
 
 #pragma region node implementation
 
@@ -238,11 +251,10 @@ AVL_tree<tkey, tvalue>::iterator_data::iterator_data(
     unsigned int depth,
     tkey const &key,
     tvalue const &value,
-    unsigned int  subtree_height):
-        binary_search_tree<tkey, tvalue>::iterator_data(depth, key, value)
-{
-    _subtree_height = subtree_height;
-}
+    unsigned int subtree_height):
+        binary_search_tree<tkey, tvalue>::iterator_data(depth, key, value),
+        _subtree_height(subtree_height)
+{ }
 
 template<
     typename tkey,
@@ -267,7 +279,6 @@ AVL_tree<tkey, tvalue>::iterator_data::iterator_data(
         _subtree_height(other._subtree_height)
 { }
 
-
 template<
     typename tkey,
     typename tvalue>
@@ -276,7 +287,6 @@ AVL_tree<tkey, tvalue>::iterator_data::iterator_data(
         binary_search_tree<tkey, tvalue>::iterator_data(std::move(other)),
         _subtree_height(std::move(other._subtree_height))
 { }
-
 
 template<
     typename tkey,
@@ -396,10 +406,20 @@ template<
     typename tkey,
     typename tvalue>
 void AVL_tree<tkey, tvalue>::insertion_template_method::balance(
-    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+    typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
 }
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string AVL_tree<tkey, tvalue>::insertion_template_method::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::insertion_template_method";
+}
+
 
 template<
     typename tkey,
@@ -414,9 +434,18 @@ template<
     typename tkey,
     typename tvalue>
 void AVL_tree<tkey, tvalue>::disposal_template_method::balance(
-    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path)
+    std::stack<typename binary_search_tree<tkey, tvalue>::node**> &path,
+    typename binary_search_tree<tkey, tvalue>::node* node_to_dispose)
 {
     dynamic_cast<AVL_tree<tkey, tvalue>*>(this->_tree)->balance(path);
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string AVL_tree<tkey, tvalue>::disposal_template_method::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::disposal_template_method";
 }
 
 #pragma endregion template methods implementation
@@ -529,9 +558,9 @@ inline size_t AVL_tree<tkey, tvalue>::get_node_size() const noexcept
 template<
     typename tkey,
     typename tvalue>
-inline void AVL_tree<tkey, tvalue>::update_node_data(typename binary_search_tree<tkey,tvalue>::node *node) const noexcept
+inline void AVL_tree<tkey, tvalue>::update_node_data(
+    typename binary_search_tree<tkey,tvalue>::node *node) const noexcept
 {
-    //std::cout << "AVL UPD NODE" << std::endl;
     AVL_tree<tkey, tvalue>::node *avl_node = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(node);
     
     unsigned int left_subtree_height = get_subtree_height(avl_node->left_subtree);
@@ -596,7 +625,8 @@ typename binary_search_tree<tkey, tvalue>::iterator_data *AVL_tree<tkey, tvalue>
 template<
     typename tkey,
     typename tvalue>
-inline unsigned int AVL_tree<tkey, tvalue>::get_subtree_height(typename binary_search_tree<tkey,tvalue>::node* node) noexcept
+inline unsigned int AVL_tree<tkey, tvalue>::get_subtree_height(
+    typename binary_search_tree<tkey,tvalue>::node* node) noexcept
 {
     auto *avl_node = dynamic_cast<AVL_tree<tkey,tvalue>::node*>(node);
     

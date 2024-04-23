@@ -709,7 +709,8 @@ public:
 protected:
 
     class template_method_basics:
-        public logger_guardant
+        public logger_guardant,
+        private typename_holder
     {
     
     protected:
@@ -727,11 +728,16 @@ protected:
             tkey const &key) const;
         
         virtual void balance(
-            std::stack<node**> &path);
+            std::stack<node**> &path,
+            node* node_to_dispose = nullptr);
 
     protected:
     
         [[nodiscard]] logger *get_logger() const noexcept final;
+    
+    private:
+    
+        inline std::string get_typename() const noexcept override;
         
     };
     
@@ -764,6 +770,8 @@ protected:
         
         [[nodiscard]] allocator *get_allocator() const noexcept final;
         
+        inline std::string get_typename() const noexcept override;
+        
     };
     
     class obtaining_template_method:
@@ -785,7 +793,11 @@ protected:
             tkey const &upper_bound,
             bool lower_bound_inclusive,
             bool upper_bound_inclusive);
-
+    
+    private:
+    
+        inline std::string get_typename() const noexcept override;
+    
     };
     
     class disposal_template_method:
@@ -812,6 +824,8 @@ protected:
         
         [[nodiscard]] allocator *get_allocator() const noexcept final;
         
+        inline std::string get_typename() const noexcept override;
+    
     };
     
     #pragma endregion template methods definition
@@ -837,7 +851,7 @@ protected:
 public:
     
     explicit binary_search_tree(
-        std::function<int(tkey const &, tkey const &)> comparer = std::less<tkey>(), // TODO: fix default comparer
+        std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
         typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy = binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
@@ -1008,11 +1022,12 @@ protected:
     
     #pragma endregion subtree rotations definition
 
-protected:
+private:
 
     inline std::string get_typename() const noexcept override;
 
 };
+
 
 #pragma region binary_search_tree<tkey, tvalue>::node methods implementation
 
@@ -3112,7 +3127,8 @@ template<
     typename tkey,
     typename tvalue>
 void binary_search_tree<tkey, tvalue>::template_method_basics::balance(
-    std::stack<node**> &path)
+    std::stack<node**> &path,
+    node* node_to_dispose)
 { }
 
 template<
@@ -3121,6 +3137,14 @@ template<
 [[nodiscard]] inline logger *binary_search_tree<tkey, tvalue>::template_method_basics::get_logger() const noexcept
 {
     return this->_tree->get_logger();
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string binary_search_tree<tkey, tvalue>::template_method_basics::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::template_method_basics";
 }
 
     #pragma endregion binary_search_tree<tkey, tvalue>::template_method_basics implementation
@@ -3160,7 +3184,7 @@ void binary_search_tree<tkey, tvalue>::insertion_template_method::insert(
         return;
     }
     
-    *(path.top()) = static_cast<node*>(allocate_with_guard(this->_tree->get_node_size(), 1));
+    *(path.top()) = reinterpret_cast<node*>(allocate_with_guard(this->_tree->get_node_size(), 1));
     this->_tree->call_node_constructor(*(path.top()), key, value);
     
     this->balance(path);
@@ -3189,7 +3213,7 @@ void binary_search_tree<tkey, tvalue>::insertion_template_method::insert(
         return;
     }
     
-    *(path.top()) = static_cast<node*>(allocate_with_guard(this->_tree->get_node_size(), 1));
+    *(path.top()) = reinterpret_cast<node*>(allocate_with_guard(this->_tree->get_node_size(), 1));
     this->_tree->call_node_constructor(*(path.top()), key, std::move(value));
     
     this->balance(path);
@@ -3201,6 +3225,14 @@ template<
 allocator *binary_search_tree<tkey, tvalue>::insertion_template_method::get_allocator() const noexcept
 {
     return this->_tree->get_allocator();
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string binary_search_tree<tkey, tvalue>::insertion_template_method::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::insertion_template_method";
 }
 
     #pragma endregion search_tree<tkey, tvalue>::insertion_template_method implementation
@@ -3248,7 +3280,7 @@ std::vector<typename associative_container<tkey, tvalue>::key_value_pair> binary
     std::vector<typename associative_container<tkey, tvalue>::key_value_pair> range;
     std::stack<node*> path;
 
-    node *path_finder = static_cast<node*>(this->_tree->_root);
+    node *path_finder = reinterpret_cast<node*>(this->_tree->_root);
     int comparison_result;
     
     while (true)
@@ -3305,6 +3337,14 @@ std::vector<typename associative_container<tkey, tvalue>::key_value_pair> binary
     return range;
 }
 
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string binary_search_tree<tkey, tvalue>::obtaining_template_method::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::obtaining_template_method";
+}
+
     #pragma endregion search_tree<tkey, tvalue>::obtaining_template_method implementation
 
     #pragma region search_tree<tkey, tvalue>::disposal_template_method implementation
@@ -3358,11 +3398,13 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
             ? (*path.top())->right_subtree
             : (*path.top())->left_subtree;
     
-    allocator::destruct(*(path.top()));
-    deallocate_with_guard(*(path.top()));
+    node *node_to_dispose = *(path.top());
     
     *(path.top()) = subtree;
-    this->balance(path);
+    this->balance(path, node_to_dispose);
+    
+    allocator::destruct(node_to_dispose);
+    deallocate_with_guard(node_to_dispose);
     
     return value;
 }
@@ -3373,6 +3415,14 @@ template<
 [[nodiscard]] inline allocator *binary_search_tree<tkey, tvalue>::disposal_template_method::get_allocator() const noexcept
 {
     return this->_tree->get_allocator();
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string binary_search_tree<tkey, tvalue>::disposal_template_method::get_typename() const noexcept
+{
+    return "binary_search_tree<tkey, tvalue>::disposal_template_method";
 }
 
     #pragma endregion search_tree<tkey, tvalue>::disposal_template_method implementation
@@ -3432,7 +3482,7 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
 {
     try
     {
-        this->_root = copy(static_cast<node*>(other._root));
+        this->_root = copy(reinterpret_cast<node*>(other._root));
         _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy);
         _obtaining_template = new binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
         _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy);
@@ -3484,7 +3534,7 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         *_obtaining_template = *(other._obtaining_template);
         *_disposal_template = *(other._disposal_template);
         
-        this->_root = copy(static_cast<node*>(other._root));
+        this->_root = copy(reinterpret_cast<node*>(other._root));
     }
     
     return *this;
@@ -3570,7 +3620,7 @@ typename binary_search_tree<tkey, tvalue>::node *binary_search_tree<tkey, tvalue
     
     try
     {
-        subtree_root_copied = static_cast<node*>(this->allocate_with_guard(this->get_node_size(), 1));
+        subtree_root_copied = reinterpret_cast<node*>(this->allocate_with_guard(this->get_node_size(), 1));
         call_node_constructor(subtree_root_copied, subtree_root->key, subtree_root->value);
         subtree_root_copied->left_subtree = copy(subtree_root->left_subtree);
         subtree_root_copied->right_subtree = copy(subtree_root->right_subtree);
@@ -3792,7 +3842,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::prefix_iterator binary_search_tree<tkey, tvalue>::begin_prefix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::prefix_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::prefix_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3808,7 +3858,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::prefix_const_iterator binary_search_tree<tkey, tvalue>::cbegin_prefix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::prefix_const_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::prefix_const_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3824,7 +3874,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::prefix_reverse_iterator binary_search_tree<tkey, tvalue>::rbegin_prefix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::prefix_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::prefix_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3840,7 +3890,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator binary_search_tree<tkey, tvalue>::crbegin_prefix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3856,7 +3906,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::infix_iterator binary_search_tree<tkey, tvalue>::begin_infix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::infix_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::infix_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3872,7 +3922,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::infix_const_iterator binary_search_tree<tkey, tvalue>::cbegin_infix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::infix_const_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::infix_const_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3888,7 +3938,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::infix_reverse_iterator binary_search_tree<tkey, tvalue>::rbegin_infix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::infix_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::infix_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3904,7 +3954,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator binary_search_tree<tkey, tvalue>::crbegin_infix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3920,7 +3970,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::postfix_iterator binary_search_tree<tkey, tvalue>::begin_postfix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::postfix_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::postfix_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3936,7 +3986,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::postfix_const_iterator binary_search_tree<tkey, tvalue>::cbegin_postfix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::postfix_const_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::postfix_const_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3952,7 +4002,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::postfix_reverse_iterator binary_search_tree<tkey, tvalue>::rbegin_postfix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::postfix_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::postfix_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
@@ -3968,7 +4018,7 @@ template<
     typename tvalue>
 typename binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator binary_search_tree<tkey, tvalue>::crbegin_postfix() const noexcept
 {
-    return binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator(this, static_cast<node*>(this->_root));
+    return binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator(this, reinterpret_cast<node*>(this->_root));
 }
 
 template<
