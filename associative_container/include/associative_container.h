@@ -11,6 +11,23 @@ template<
 class associative_container
 {
 
+protected:
+
+    class default_key_comparer final
+    {
+
+    public:
+        
+        int operator()(
+            int first,
+            int second);
+        
+        int operator()(
+            std::string const &first,
+            std::string const &second);
+        
+    };
+
 public:
     
     struct key_value_pair final
@@ -62,7 +79,35 @@ public:
     
     virtual tvalue dispose(
         tkey const &key) = 0;
-    
+  
 };
+
+template<
+    typename tkey,
+    typename tvalue>
+int associative_container<tkey, tvalue>::default_key_comparer::operator()(
+    int first,
+    int second)
+{
+    return first - second;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+int associative_container<tkey, tvalue>::default_key_comparer::operator()(
+    std::string const &first,
+    std::string const &second)
+{
+    if (first > second)
+    {
+        return 1;
+    }
+    else if (first == second)
+    {
+        return 0;
+    }
+    return -1;
+}
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_ASSOCIATIVE_CONTAINER_H
