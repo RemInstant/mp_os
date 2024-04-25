@@ -196,12 +196,12 @@ private:
             iterator &&other) noexcept;
         
         iterator &operator=(
-            iterator const &other);
+            iterator const &other) = default;
         
         iterator &operator=(
-            iterator &&other) noexcept;
+            iterator &&other) noexcept = default;
     
-        virtual ~iterator() noexcept;
+        virtual ~iterator() noexcept = default;
     
     public:
     
@@ -236,12 +236,12 @@ public:
             prefix_iterator &&other) noexcept;
         
         prefix_iterator &operator=(
-            prefix_iterator const &other);
+            prefix_iterator const &other) = default;
         
         prefix_iterator &operator=(
-            prefix_iterator &&other) noexcept;
+            prefix_iterator &&other) noexcept = default;
     
-        ~prefix_iterator() noexcept;
+        ~prefix_iterator() noexcept = default;
     
     private:
     
@@ -270,12 +270,12 @@ public:
             prefix_const_iterator &&other) noexcept;
         
         prefix_const_iterator &operator=(
-            prefix_const_iterator const &other);
+            prefix_const_iterator const &other) = default;
         
         prefix_const_iterator &operator=(
-            prefix_const_iterator &&other) noexcept;
+            prefix_const_iterator &&other) noexcept = default;
     
-        ~prefix_const_iterator() noexcept;
+        ~prefix_const_iterator() noexcept = default;
     
     private:
     
@@ -304,12 +304,12 @@ public:
             prefix_reverse_iterator &&other) noexcept;
         
         prefix_reverse_iterator &operator=(
-            prefix_reverse_iterator const &other);
+            prefix_reverse_iterator const &other) = default;
         
         prefix_reverse_iterator &operator=(
-            prefix_reverse_iterator &&other) noexcept;
+            prefix_reverse_iterator &&other) noexcept = default;
     
-        ~prefix_reverse_iterator() noexcept;
+        ~prefix_reverse_iterator() noexcept = default;
     
     private:
     
@@ -338,12 +338,12 @@ public:
             prefix_const_reverse_iterator &&other) noexcept;
         
         prefix_const_reverse_iterator &operator=(
-            prefix_const_reverse_iterator const &other);
+            prefix_const_reverse_iterator const &other) = default;
         
         prefix_const_reverse_iterator &operator=(
-            prefix_const_reverse_iterator &&other) noexcept;
+            prefix_const_reverse_iterator &&other) noexcept = default;
     
-        ~prefix_const_reverse_iterator() noexcept;
+        ~prefix_const_reverse_iterator() noexcept = default;
     
     private:
     
@@ -372,12 +372,12 @@ public:
             infix_iterator &&other) noexcept;
         
         infix_iterator &operator=(
-            infix_iterator const &other);
+            infix_iterator const &other) = default;
         
         infix_iterator &operator=(
-            infix_iterator &&other) noexcept;
+            infix_iterator &&other) noexcept = default;
     
-        ~infix_iterator() noexcept;
+        ~infix_iterator() noexcept = default;
     
     private:
     
@@ -406,12 +406,12 @@ public:
             infix_const_iterator &&other) noexcept;
         
         infix_const_iterator &operator=(
-            infix_const_iterator const &other);
+            infix_const_iterator const &other) = default;
         
         infix_const_iterator &operator=(
-            infix_const_iterator &&other) noexcept;
+            infix_const_iterator &&other) noexcept = default;
     
-        ~infix_const_iterator() noexcept;
+        ~infix_const_iterator() noexcept = default;
     
     private:
     
@@ -440,12 +440,12 @@ public:
             infix_reverse_iterator &&other) noexcept;
         
         infix_reverse_iterator &operator=(
-            infix_reverse_iterator const &other);
+            infix_reverse_iterator const &other) = default;
         
         infix_reverse_iterator &operator=(
-            infix_reverse_iterator &&other) noexcept;
+            infix_reverse_iterator &&other) noexcept = default;
     
-        ~infix_reverse_iterator() noexcept;
+        ~infix_reverse_iterator() noexcept = default;
     
     private:
     
@@ -474,12 +474,12 @@ public:
             infix_const_reverse_iterator &&other) noexcept;
         
         infix_const_reverse_iterator &operator=(
-            infix_const_reverse_iterator const &other);
+            infix_const_reverse_iterator const &other) = default;
         
         infix_const_reverse_iterator &operator=(
-            infix_const_reverse_iterator &&other) noexcept;
+            infix_const_reverse_iterator &&other) noexcept = default;
     
-        ~infix_const_reverse_iterator() noexcept;
+        ~infix_const_reverse_iterator() noexcept = default;
     
     private:
     
@@ -508,12 +508,12 @@ public:
             postfix_iterator &&other) noexcept;
         
         postfix_iterator &operator=(
-            postfix_iterator const &other);
+            postfix_iterator const &other) = default;
         
         postfix_iterator &operator=(
-            postfix_iterator &&other) noexcept;
+            postfix_iterator &&other) noexcept = default;
     
-        ~postfix_iterator() noexcept;
+        ~postfix_iterator() noexcept = default;
     
     private:
     
@@ -542,12 +542,12 @@ public:
             postfix_const_iterator &&other) noexcept;
         
         postfix_const_iterator &operator=(
-            postfix_const_iterator const &other);
+            postfix_const_iterator const &other) = default;
         
         postfix_const_iterator &operator=(
-            postfix_const_iterator &&other) noexcept;
+            postfix_const_iterator &&other) noexcept = default;
     
-        ~postfix_const_iterator() noexcept;
+        ~postfix_const_iterator() noexcept = default;
     
     private:
     
@@ -576,12 +576,12 @@ public:
             postfix_reverse_iterator &&other) noexcept;
         
         postfix_reverse_iterator &operator=(
-            postfix_reverse_iterator const &other);
+            postfix_reverse_iterator const &other) = default;
         
         postfix_reverse_iterator &operator=(
-            postfix_reverse_iterator &&other) noexcept;
+            postfix_reverse_iterator &&other) noexcept = default;
     
-        ~postfix_reverse_iterator() noexcept;
+        ~postfix_reverse_iterator() noexcept = default;
     
     private:
     
@@ -610,12 +610,12 @@ public:
             postfix_const_reverse_iterator &&other) noexcept;
         
         postfix_const_reverse_iterator &operator=(
-            postfix_const_reverse_iterator const &other);
+            postfix_const_reverse_iterator const &other) = default;
         
         postfix_const_reverse_iterator &operator=(
-            postfix_const_reverse_iterator &&other) noexcept;
+            postfix_const_reverse_iterator &&other) noexcept = default;
     
-        ~postfix_const_reverse_iterator() noexcept;
+        ~postfix_const_reverse_iterator() noexcept = default;
     
     private:
     
@@ -1521,40 +1521,6 @@ binary_search_tree<tkey, tvalue>::iterator::iterator(
         const_iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::iterator &binary_search_tree<tkey, tvalue>::iterator::operator=(
-    iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::iterator &binary_search_tree<tkey, tvalue>::iterator::operator=(
-    iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::iterator::~iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -1619,40 +1585,6 @@ template<
 binary_search_tree<tkey, tvalue>::prefix_iterator::prefix_iterator(
     prefix_iterator &&other) noexcept:
         iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_iterator &binary_search_tree<tkey, tvalue>::prefix_iterator::operator=(
-    prefix_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_iterator &binary_search_tree<tkey, tvalue>::prefix_iterator::operator=(
-    prefix_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::prefix_iterator::~prefix_iterator() noexcept
 { }
 
 
@@ -1744,40 +1676,6 @@ binary_search_tree<tkey, tvalue>::prefix_const_iterator::prefix_const_iterator(
         const_iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_const_iterator &binary_search_tree<tkey, tvalue>::prefix_const_iterator::operator=(
-    prefix_const_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_const_iterator &binary_search_tree<tkey, tvalue>::prefix_const_iterator::operator=(
-    prefix_const_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::prefix_const_iterator::~prefix_const_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -1865,40 +1763,6 @@ template<
 binary_search_tree<tkey, tvalue>::prefix_reverse_iterator::prefix_reverse_iterator(
     prefix_reverse_iterator &&other) noexcept:
         iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_reverse_iterator &binary_search_tree<tkey, tvalue>::prefix_reverse_iterator::operator=(
-    prefix_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_reverse_iterator &binary_search_tree<tkey, tvalue>::prefix_reverse_iterator::operator=(
-    prefix_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::prefix_reverse_iterator::~prefix_reverse_iterator() noexcept
 { }
 
 
@@ -1990,40 +1854,6 @@ binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator::prefix_const_re
         const_iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator::operator=(
-    prefix_const_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator::operator=(
-    prefix_const_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::prefix_const_reverse_iterator::~prefix_const_reverse_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -2113,40 +1943,6 @@ binary_search_tree<tkey, tvalue>::infix_iterator::infix_iterator(
         iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_iterator &binary_search_tree<tkey, tvalue>::infix_iterator::operator=(
-    infix_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_iterator &binary_search_tree<tkey, tvalue>::infix_iterator::operator=(
-    infix_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::infix_iterator::~infix_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -2231,40 +2027,6 @@ template<
 binary_search_tree<tkey, tvalue>::infix_const_iterator::infix_const_iterator(
     infix_const_iterator &&other) noexcept:
         const_iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_const_iterator &binary_search_tree<tkey, tvalue>::infix_const_iterator::operator=(
-    infix_const_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_const_iterator &binary_search_tree<tkey, tvalue>::infix_const_iterator::operator=(
-    infix_const_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::infix_const_iterator::~infix_const_iterator() noexcept
 { }
 
 
@@ -2353,40 +2115,6 @@ binary_search_tree<tkey, tvalue>::infix_reverse_iterator::infix_reverse_iterator
         iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_reverse_iterator &binary_search_tree<tkey, tvalue>::infix_reverse_iterator::operator=(
-    infix_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_reverse_iterator &binary_search_tree<tkey, tvalue>::infix_reverse_iterator::operator=(
-    infix_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::infix_reverse_iterator::~infix_reverse_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -2471,40 +2199,6 @@ template<
 binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator::infix_const_reverse_iterator(
     infix_const_reverse_iterator &&other) noexcept:
         const_iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator::operator=(
-    infix_const_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator::operator=(
-    infix_const_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::infix_const_reverse_iterator::~infix_const_reverse_iterator() noexcept
 { }
 
 
@@ -2595,40 +2289,6 @@ binary_search_tree<tkey, tvalue>::postfix_iterator::postfix_iterator(
         iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_iterator &binary_search_tree<tkey, tvalue>::postfix_iterator::operator=(
-    postfix_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_iterator &binary_search_tree<tkey, tvalue>::postfix_iterator::operator=(
-    postfix_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::postfix_iterator::~postfix_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -2713,40 +2373,6 @@ template<
 binary_search_tree<tkey, tvalue>::postfix_const_iterator::postfix_const_iterator(
     postfix_const_iterator &&other) noexcept:
         const_iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_const_iterator &binary_search_tree<tkey, tvalue>::postfix_const_iterator::operator=(
-    postfix_const_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_const_iterator &binary_search_tree<tkey, tvalue>::postfix_const_iterator::operator=(
-    postfix_const_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::postfix_const_iterator::~postfix_const_iterator() noexcept
 { }
 
 
@@ -2835,40 +2461,6 @@ binary_search_tree<tkey, tvalue>::postfix_reverse_iterator::postfix_reverse_iter
         iterator(std::move(other))
 { }
 
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_reverse_iterator &binary_search_tree<tkey, tvalue>::postfix_reverse_iterator::operator=(
-    postfix_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_reverse_iterator &binary_search_tree<tkey, tvalue>::postfix_reverse_iterator::operator=(
-    postfix_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::postfix_reverse_iterator::~postfix_reverse_iterator() noexcept
-{ }
-
 
 template<
     typename tkey,
@@ -2953,40 +2545,6 @@ template<
 binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::postfix_const_reverse_iterator(
     postfix_const_reverse_iterator &&other) noexcept:
         const_iterator(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::operator=(
-    postfix_const_reverse_iterator const &other)
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-typename binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator &binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::operator=(
-    postfix_const_reverse_iterator &&other) noexcept
-{
-    if (*this != other)
-    {
-        const_iterator::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::~postfix_const_reverse_iterator() noexcept
 { }
 
 
