@@ -3,28 +3,29 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 
 class allocator
 {
 
 public:
     
-    typedef size_t block_size_t;
+    using block_size_t = size_t;
     
-    typedef void *block_pointer_t;
+    using block_pointer_t = void *;
 
 public:
     
     virtual ~allocator() noexcept = default;
 
 public:
-    
+
     template<
         typename T,
-        typename ...args>
+        typename ...Args>
     inline static void construct(
         T *at,
-        args... constructor_arguments);
+        Args &&... constructor_arguments);
     
     template<
         typename T>
@@ -49,12 +50,12 @@ protected:
 
 template<
     typename T,
-    typename ...args>
+    typename ...Args>
 inline void allocator::construct(
     T *at,
-    args... constructor_arguments)
+    Args &&... constructor_arguments)
 {
-    new(at) T(constructor_arguments...);
+    new (at) T(std::forward<Args>(constructor_arguments)...);
 }
 
 template<
