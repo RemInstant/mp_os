@@ -66,7 +66,7 @@ public:
         friend class const_iterator;
         friend void binary_search_tree<tkey, tvalue>::inject_additional_data(
             iterator_data *,
-            node *) const;
+            const node *) const;
     
     protected:
     
@@ -897,8 +897,12 @@ protected:
         tvalue &&value);
 
     virtual void inject_additional_data(
+        node *destination,
+        node const *source) const;
+    
+    virtual void inject_additional_data(
         iterator_data *destination,
-        node *source) const;
+        node const *source) const;
 
     virtual iterator_data *create_iterator_data() const;
 
@@ -2001,7 +2005,7 @@ binary_search_tree<tkey, tvalue>::infix_const_iterator::infix_const_iterator(
     }
     
     node *node = this->_state.empty() ? nullptr : this->_state.top();
-    this->_data = holder->create_iterator_data(this->_state.size() - 1, node);
+    this->_data = holder->create_iterator_data(this->_state.size(); - 1, node);
 }
 
 template<
@@ -3088,11 +3092,12 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         this->_logger = other._logger;
         this->_keys_comparer = other._keys_comparer;
         
+        this->_root = copy(reinterpret_cast<node*>(other._root));
+        
         *_insertion_template = *(other._insertion_template);
         *_obtaining_template = *(other._obtaining_template);
         *_disposal_template = *(other._disposal_template);
         
-        this->_root = copy(reinterpret_cast<node*>(other._root));
     }
     
     return *this;
@@ -3106,23 +3111,26 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
 {
     if (this != &other)
     {
-        this->~binary_search_tree();
+        clear(reinterpret_cast<node**>(&this->_root));
+        delete _insertion_template;
+        delete _obtaining_template;
+        delete _disposal_template;
         
         this->_keys_comparer = std::move(other._keys_comparer);
-        this->_logger = std::move(other._logger);
         this->_allocator = std::move(other._allocator);
+        this->_logger = std::move(other._logger);
+        this->_root = std::move(other._root);
         
         _insertion_template = std::move(other._insertion_template);
         _obtaining_template = std::move(other._obtaining_template);
         _disposal_template = std::move(other._disposal_template);
-        this->_root = std::move(other._root);
         
-        other._logger = nullptr;
         other._allocator = nullptr;
+        other._logger = nullptr;
+        other._root = nullptr;
         other._insertion_template = nullptr;
         other._obtaining_template = nullptr;
         other._disposal_template = nullptr;
-        other._root = nullptr;
     }
     
     return *this;
@@ -3134,7 +3142,6 @@ template<
 binary_search_tree<tkey, tvalue>::~binary_search_tree()
 {
     clear(reinterpret_cast<node**>(&this->_root));
-    
     delete _insertion_template;
     delete _obtaining_template;
     delete _disposal_template;
@@ -3180,6 +3187,7 @@ typename binary_search_tree<tkey, tvalue>::node *binary_search_tree<tkey, tvalue
     {
         subtree_root_copied = reinterpret_cast<node*>(this->allocate_with_guard(this->get_node_size(), 1));
         call_node_constructor(subtree_root_copied, subtree_root->key, subtree_root->value);
+        inject_additional_data(subtree_root_copied, subtree_root);
         subtree_root_copied->left_subtree = copy(subtree_root->left_subtree);
         subtree_root_copied->right_subtree = copy(subtree_root->right_subtree);
     }
@@ -3233,8 +3241,16 @@ template<
     typename tkey,
     typename tvalue>
 void binary_search_tree<tkey, tvalue>::inject_additional_data(
+    node *destination,
+    node const *source) const
+{ }
+
+template<
+    typename tkey,
+    typename tvalue>
+void binary_search_tree<tkey, tvalue>::inject_additional_data(
     iterator_data *destination,
-    node *source) const
+    node const *source) const
 { }
 
 template<

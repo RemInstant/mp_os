@@ -42,7 +42,7 @@ public:
     
         friend void AVL_tree<tkey, tvalue>::inject_additional_data(
            typename binary_search_tree<tkey, tvalue>::iterator_data *,
-           typename binary_search_tree<tkey, tvalue>::node *) const;
+           typename binary_search_tree<tkey, tvalue>::node const *) const;
     
     private:
         
@@ -150,11 +150,11 @@ public:
     AVL_tree(
         AVL_tree<tkey, tvalue> const &other);
     
-    AVL_tree<tkey, tvalue> &operator=(
-        AVL_tree<tkey, tvalue> const &other);
-    
     AVL_tree(
         AVL_tree<tkey, tvalue> &&other) noexcept;
+    
+    AVL_tree<tkey, tvalue> &operator=(
+        AVL_tree<tkey, tvalue> const &other);
     
     AVL_tree<tkey, tvalue> &operator=(
         AVL_tree<tkey, tvalue> &&other) noexcept;
@@ -177,8 +177,12 @@ private:
         tvalue &&value) override;
 
     void inject_additional_data(
+        typename binary_search_tree<tkey,tvalue>::node *destination,
+        typename binary_search_tree<tkey,tvalue>::node const *source) const override;
+    
+    void inject_additional_data(
         typename binary_search_tree<tkey,tvalue>::iterator_data *destination,
-        typename binary_search_tree<tkey,tvalue>::node *source) const override;
+        typename binary_search_tree<tkey,tvalue>::node const *source) const override;
 
     typename binary_search_tree<tkey,tvalue>::iterator_data *create_iterator_data() const override;
 
@@ -482,18 +486,25 @@ template<
     typename tvalue>
 AVL_tree<tkey, tvalue>::AVL_tree(
     AVL_tree<tkey, tvalue> const &other):
-        binary_search_tree<tkey, tvalue>(other._keys_comparer, other.get_logger(), other.get_allocator())
+        binary_search_tree<tkey, tvalue>(
+            new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy),
+            new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
+            new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy),
+            other._keys_comparer, other.get_allocator(), other.get_logger())
 {
     try
     {
-        this->_root = copy(static_cast<node*>(other._root));
-        this->_insertion_template = new AVL_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy);
-        this->_obtaining_template = new typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
-        this->_disposal_template = new AVL_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy);
+        if (this->_insertion_template == nullptr || this->_obtaining_template == nullptr ||
+            this->_disposal_template == nullptr)
+        {
+            throw std::bad_alloc();
+        }
+        
+        this->_root = this->copy(reinterpret_cast<node*>(other._root));
     }
     catch (const std::bad_alloc& ex)
     {
-        clear(reinterpret_cast<node**>(&this->_root));
+        this->clear(reinterpret_cast<typename binary_search_tree<tkey, tvalue>::node**>(&this->_root));
         delete this->_insertion_template;
         delete this->_obtaining_template;
         delete this->_disposal_template;
@@ -515,7 +526,7 @@ template<
 AVL_tree<tkey, tvalue> &AVL_tree<tkey, tvalue>::operator=(
     AVL_tree<tkey, tvalue> const &other)
 {
-    if (*this != other)
+    if (this != &other)
     {
         binary_search_tree<tkey, tvalue>::operator=(other);
     }
@@ -529,7 +540,7 @@ template<
 AVL_tree<tkey, tvalue> &AVL_tree<tkey, tvalue>::operator=(
     AVL_tree<tkey, tvalue> &&other) noexcept
 {
-    if (*this != other)
+    if (this != &other)
     {
         binary_search_tree<tkey, tvalue>::operator=(std::move(other));
     }
@@ -577,7 +588,7 @@ inline void AVL_tree<tkey, tvalue>::call_node_constructor(
     tkey const &key,
     tvalue const &value)
 {
-    allocator::construct(dynamic_cast<AVL_tree<tkey, tvalue>::node*>(raw_space), key, value);
+    allocator::construct(reinterpret_cast<AVL_tree<tkey, tvalue>::node*>(raw_space), key, value);
 }
 
 template<
@@ -595,11 +606,24 @@ template<
     typename tkey,
     typename tvalue>
 void AVL_tree<tkey, tvalue>::inject_additional_data(
+    typename binary_search_tree<tkey,tvalue>::node *destination,
+    typename binary_search_tree<tkey,tvalue>::node const *source) const
+{
+    auto *avl_destination = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(destination);
+    auto *avl_source = dynamic_cast<AVL_tree<tkey, tvalue>::node const*>(source);
+    
+    avl_destination->subtree_height = avl_source->subtree_height;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+void AVL_tree<tkey, tvalue>::inject_additional_data(
     typename binary_search_tree<tkey,tvalue>::iterator_data *destination,
-    typename binary_search_tree<tkey,tvalue>::node *source) const
+    typename binary_search_tree<tkey,tvalue>::node const *source) const
 {
     auto *avl_destination = dynamic_cast<AVL_tree<tkey, tvalue>::iterator_data*>(destination);
-    auto *avl_source = dynamic_cast<AVL_tree<tkey, tvalue>::node*>(source);
+    auto *avl_source = dynamic_cast<AVL_tree<tkey, tvalue>::node const*>(source);
     
     avl_destination->_subtree_height = avl_source->subtree_height;
 }

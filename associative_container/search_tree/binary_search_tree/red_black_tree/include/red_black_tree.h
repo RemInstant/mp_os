@@ -49,7 +49,7 @@ public:
     
         friend void red_black_tree<tkey, tvalue>::inject_additional_data(
            typename binary_search_tree<tkey, tvalue>::iterator_data *,
-           typename binary_search_tree<tkey, tvalue>::node *) const;
+           typename binary_search_tree<tkey, tvalue>::node const*) const;
     
     private:
         
@@ -185,17 +185,21 @@ private:
         typename binary_search_tree<tkey,tvalue>::node *raw_space,
         tkey const &key,
         tvalue &&value) override;
-
+    
+    void inject_additional_data(
+        typename binary_search_tree<tkey,tvalue>::node *destination,
+        typename binary_search_tree<tkey,tvalue>::node const *source) const override;
+    
     void inject_additional_data(
         typename binary_search_tree<tkey,tvalue>::iterator_data *destination,
-        typename binary_search_tree<tkey,tvalue>::node *source) const override;
-
+        typename binary_search_tree<tkey,tvalue>::node const *source) const override;
+    
     typename binary_search_tree<tkey,tvalue>::iterator_data *create_iterator_data() const override;
-
+    
     typename binary_search_tree<tkey,tvalue>::iterator_data *create_iterator_data(
         unsigned int depth,
         typename binary_search_tree<tkey,tvalue>::node *&src_node) const override;
-
+    
     static inline node_color get_color(
         typename binary_search_tree<tkey,tvalue>::node* node) noexcept;
     
@@ -666,18 +670,25 @@ template<
     typename tvalue>
 red_black_tree<tkey, tvalue>::red_black_tree(
     red_black_tree<tkey, tvalue> const &other):
-        binary_search_tree<tkey, tvalue>(other._keys_comparer, other.get_logger(), other.get_allocator())
+        binary_search_tree<tkey, tvalue>(
+            new(std::nothrow) red_black_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy),
+            new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
+            new(std::nothrow) red_black_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy),
+            other._keys_comparer, other.get_allocator(), other.get_logger())
 {
     try
     {
-        this->_root = copy(static_cast<node*>(other._root));
-        this->_insertion_template = new red_black_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy);
-        this->_obtaining_template = new typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
-        this->_disposal_template = new red_black_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy);
+        if (this->_insertion_template == nullptr || this->_obtaining_template == nullptr ||
+            this->_disposal_template == nullptr)
+        {
+            throw std::bad_alloc();
+        }
+        
+        this->_root = this->copy(reinterpret_cast<node*>(other._root));
     }
     catch (const std::bad_alloc& ex)
     {
-        clear(reinterpret_cast<node**>(&this->_root));
+        this->clear(reinterpret_cast<typename binary_search_tree<tkey, tvalue>::node**>(&this->_root));
         delete this->_insertion_template;
         delete this->_obtaining_template;
         delete this->_disposal_template;
@@ -699,7 +710,7 @@ template<
 red_black_tree<tkey, tvalue> &red_black_tree<tkey, tvalue>::operator=(
     red_black_tree<tkey, tvalue> const &other)
 {
-    if (*this != other)
+    if (this != &other)
     {
         binary_search_tree<tkey, tvalue>::operator=(other);
     }
@@ -713,7 +724,7 @@ template<
 red_black_tree<tkey, tvalue> &red_black_tree<tkey, tvalue>::operator=(
     red_black_tree<tkey, tvalue> &&other) noexcept
 {
-    if (*this != other)
+    if (this != &other)
     {
         binary_search_tree<tkey, tvalue>::operator=(std::move(other));
     }
@@ -747,7 +758,7 @@ inline void red_black_tree<tkey, tvalue>::call_node_constructor(
     tkey const &key,
     tvalue const &value)
 {
-    allocator::construct(dynamic_cast<red_black_tree<tkey, tvalue>::node*>(raw_space), key, value);
+    allocator::construct(reinterpret_cast<red_black_tree<tkey, tvalue>::node*>(raw_space), key, value);
 }
 
 template<
@@ -765,11 +776,24 @@ template<
     typename tkey,
     typename tvalue>
 void red_black_tree<tkey, tvalue>::inject_additional_data(
+    typename binary_search_tree<tkey,tvalue>::node *destination,
+    typename binary_search_tree<tkey,tvalue>::node const *source) const
+{
+    auto *rbt_destination = dynamic_cast<red_black_tree<tkey, tvalue>::node*>(destination);
+    auto *rbt_source = dynamic_cast<red_black_tree<tkey, tvalue>::node const*>(source);
+    
+    rbt_destination->color = rbt_source->color;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+void red_black_tree<tkey, tvalue>::inject_additional_data(
     typename binary_search_tree<tkey,tvalue>::iterator_data *destination,
-    typename binary_search_tree<tkey,tvalue>::node *source) const
+    typename binary_search_tree<tkey,tvalue>::node const *source) const
 {
     auto *rbt_destination = dynamic_cast<red_black_tree<tkey, tvalue>::iterator_data*>(destination);
-    auto *rbt_source = dynamic_cast<red_black_tree<tkey, tvalue>::node*>(source);
+    auto *rbt_source = dynamic_cast<red_black_tree<tkey, tvalue>::node const*>(source);
     
     rbt_destination->_color = rbt_source->color;
 }
