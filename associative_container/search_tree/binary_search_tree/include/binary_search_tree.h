@@ -2005,7 +2005,7 @@ binary_search_tree<tkey, tvalue>::infix_const_iterator::infix_const_iterator(
     }
     
     node *node = this->_state.empty() ? nullptr : this->_state.top();
-    this->_data = holder->create_iterator_data(this->_state.size(); - 1, node);
+    this->_data = holder->create_iterator_data(this->_state.size() - 1, node);
 }
 
 template<
@@ -3072,10 +3072,10 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
     
     other._logger = nullptr;
     other._allocator = nullptr;
+    other._root = nullptr;
     other._insertion_template = nullptr;
     other._obtaining_template = nullptr;
     other._disposal_template = nullptr;
-    other._root = nullptr;
 }
 
 template<
