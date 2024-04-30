@@ -854,8 +854,10 @@ public:
         std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy = binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy = binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
+        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
     
@@ -872,43 +874,6 @@ public:
         binary_search_tree<tkey, tvalue> &&other) noexcept;
     
     ~binary_search_tree() override;
-
-protected:
-
-    void clear(
-        node **subtree_root);
-    
-    node *copy(
-        node const *subtree_root);
-
-    virtual inline size_t get_node_size() const noexcept;
-
-    virtual inline void update_node_data(node *node) const noexcept;
-
-    // TODO: should it be here or inside insertion template method?!
-    virtual inline void call_node_constructor(
-        node *raw_space,
-        tkey const &key,
-        tvalue const &value);
-    
-    virtual inline void call_node_constructor(
-        node *raw_space,
-        tkey const &key,
-        tvalue &&value);
-
-    virtual void inject_additional_data(
-        node *destination,
-        node const *source) const;
-    
-    virtual void inject_additional_data(
-        iterator_data *destination,
-        node const *source) const;
-
-    virtual iterator_data *create_iterator_data() const;
-
-    virtual iterator_data *create_iterator_data(
-        unsigned int depth,
-        node *&src_node) const;
 
 public:
     
@@ -1025,6 +990,42 @@ protected:
         bool validate = true) const;
     
     #pragma endregion subtree rotations definition
+
+protected:
+
+    void clear(
+        node **subtree_root);
+    
+    node *copy(
+        node const *subtree_root);
+
+    virtual inline size_t get_node_size() const noexcept;
+
+    virtual inline void update_node_data(node *node) const noexcept;
+
+    virtual inline void call_node_constructor(
+        node *raw_space,
+        tkey const &key,
+        tvalue const &value);
+    
+    virtual inline void call_node_constructor(
+        node *raw_space,
+        tkey const &key,
+        tvalue &&value);
+
+    virtual void inject_additional_data(
+        node *destination,
+        node const *source) const;
+    
+    virtual void inject_additional_data(
+        iterator_data *destination,
+        node const *source) const;
+
+    virtual iterator_data *create_iterator_data() const;
+
+    virtual iterator_data *create_iterator_data(
+        unsigned int depth,
+        node *&src_node) const;
 
 private:
 
@@ -3064,11 +3065,13 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::binary_search_tree(
     binary_search_tree<tkey, tvalue> &&other) noexcept:
-    search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger(), other._root)
+    search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger())
 {
-    _insertion_template = std::move(other._insertion_template);
-    _obtaining_template = std::move(other._obtaining_template);
-    _disposal_template = std::move(other._disposal_template);
+    this->_root = other._root;
+    
+    _insertion_template = other._insertion_template;
+    _obtaining_template = other._obtaining_template;
+    _disposal_template = other._disposal_template;
     
     other._logger = nullptr;
     other._allocator = nullptr;
@@ -3117,13 +3120,13 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         delete _disposal_template;
         
         this->_keys_comparer = std::move(other._keys_comparer);
-        this->_allocator = std::move(other._allocator);
-        this->_logger = std::move(other._logger);
-        this->_root = std::move(other._root);
+        this->_allocator = other._allocator;
+        this->_logger = other._logger;
+        this->_root = other._root;
         
-        _insertion_template = std::move(other._insertion_template);
-        _obtaining_template = std::move(other._obtaining_template);
-        _disposal_template = std::move(other._disposal_template);
+        _insertion_template = other._insertion_template;
+        _obtaining_template = other._obtaining_template;
+        _disposal_template = other._disposal_template;
         
         other._allocator = nullptr;
         other._logger = nullptr;
@@ -3384,7 +3387,7 @@ void binary_search_tree<tkey, tvalue>::set_insertion_strategy(
     this->trace_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : called.")
         ->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : called.")
         ->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : insertion strategy set to "
-            + (insertion_strategy == insertion_of_existent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception")); // TODO strategy to string?
+            + (insertion_strategy == insertion_of_existent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
         
     _insertion_template->_insertion_strategy = insertion_strategy;
     
@@ -3401,7 +3404,7 @@ void binary_search_tree<tkey, tvalue>::set_disposal_strategy(
     this->trace_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : called.")
         ->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : called.")
         ->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : disposal strategy set to "
-            + (disposal_strategy == disposal_of_nonexistent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception")); // TODO strategy to string?
+            + (disposal_strategy == disposal_of_nonexistent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
     
     _disposal_template->_disposal_strategy = disposal_strategy;
     
