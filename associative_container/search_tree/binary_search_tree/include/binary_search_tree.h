@@ -18,8 +18,7 @@ template<
     typename tkey,
     typename tvalue>
 class binary_search_tree:
-    public search_tree<tkey, tvalue>,
-    protected typename_holder
+    public search_tree<tkey, tvalue>
 {
 
 protected:
@@ -625,88 +624,9 @@ public:
     
     #pragma endregion iterators definition
 
-public:
-    
-    #pragma region target operations strategies definition
-    
-    enum class insertion_of_existent_key_attempt_strategy
-    {
-        update_value,
-        throw_an_exception
-    };
-    
-    enum class disposal_of_nonexistent_key_attempt_strategy
-    {
-        do_nothing,
-        throw_an_exception
-    };
-    
-    #pragma endregion target operations strategies definition
-    
-    #pragma region target operations associated exception types
-    
-    class insertion_of_existent_key_attempt_exception final:
-        public std::logic_error
-    {
-    
-    private:
-        
-        tkey _key;
-    
-    public:
-        
-        explicit insertion_of_existent_key_attempt_exception(
-            tkey const &key);
-        
-    public:
-        
-        tkey const &get_key() const noexcept;
-    
-    };
-    
-    class obtaining_of_nonexistent_key_attempt_exception final:
-        public std::logic_error
-    {
-    
-    private:
-        
-        tkey _key;
-        
-    public:
-        
-        explicit obtaining_of_nonexistent_key_attempt_exception(
-            tkey const &key);
-        
-    public:
-        
-        tkey const &get_key() const noexcept;
-        
-    };
-    
-    class disposal_of_nonexistent_key_attempt_exception final:
-        public std::logic_error
-    {
-    
-    private:
-        
-        tkey _key;
-    
-    public:
-        
-        explicit disposal_of_nonexistent_key_attempt_exception(
-            tkey const &key);
-        
-    public:
-        
-        tkey const &get_key() const noexcept;
-    
-    };
-    
-    #pragma endregion target operations associated exception types
+protected:
     
     #pragma region template methods definition
-
-protected:
 
     class template_method_basics:
         public logger_guardant,
@@ -738,7 +658,7 @@ protected:
     private:
     
         inline std::string get_typename() const noexcept override;
-        
+    
     };
     
     class insertion_template_method:
@@ -748,13 +668,8 @@ protected:
     
     public:
         
-        binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy _insertion_strategy;
-    
-    public:
-        
         explicit insertion_template_method(
-            binary_search_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy);
+            binary_search_tree<tkey, tvalue> *tree);
         
     public:
         
@@ -807,13 +722,8 @@ protected:
     
     public:
         
-        binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy _disposal_strategy;
-    
-    public:
-        
         explicit disposal_template_method(
-            binary_search_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
+            binary_search_tree<tkey, tvalue> *tree);
         
     public:
         
@@ -831,11 +741,9 @@ protected:
     #pragma endregion template methods definition
 
 protected:
-    
+     
     insertion_template_method *_insertion_template = nullptr;
-    
     obtaining_template_method *_obtaining_template = nullptr;
-    
     disposal_template_method *_disposal_template = nullptr;
 
 protected:
@@ -846,18 +754,20 @@ protected:
         typename binary_search_tree<tkey, tvalue>::disposal_template_method *disposal_template,
         std::function<int(tkey const &, tkey const &)>,
         allocator *allocator,
-        logger *logger);
+        logger *logger,
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
 
 public:
     
     explicit binary_search_tree(
-        std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
+        std::function<int(tkey const &, tkey const &)> comparer = typename associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
-                binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
-                binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
     
@@ -896,14 +806,6 @@ public:
     
     tvalue dispose(
         tkey const &key) final;
-    
-public:
-    
-    void set_insertion_strategy(
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept;
-    
-    void set_disposal_strategy(
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
 
 public:
     
@@ -2593,58 +2495,6 @@ void binary_search_tree<tkey, tvalue>::postfix_const_reverse_iterator::pass_to_n
 
 #pragma endregion iterators implementation
 
-#pragma region target operations associated exception types implementation
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception::insertion_of_existent_key_attempt_exception(
-    tkey const &key):
-        std::logic_error("Attempt to insert already existing key inside the tree.")
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-tkey const &binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception::get_key() const noexcept
-{
-    return _key;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception::obtaining_of_nonexistent_key_attempt_exception(
-    tkey const &key):
-        std::logic_error("Attempt to obtain a value by non-existing key from the tree.")
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-tkey const &binary_search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception::get_key() const noexcept
-{
-    return _key;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception::disposal_of_nonexistent_key_attempt_exception(
-    tkey const &key):
-        std::logic_error("Attempt to dispose a value by non-existing key from the tree.")
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-tkey const &binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception::get_key() const noexcept
-{
-    return _key;
-}
-
-#pragma endregion target operations associated exception types implementation
-
 #pragma region template methods implementation
 
     #pragma region binary_search_tree<tkey, tvalue>::template_method_basics implementation
@@ -2718,10 +2568,8 @@ template<
     typename tkey,
     typename tvalue>
 binary_search_tree<tkey, tvalue>::insertion_template_method::insertion_template_method(
-    binary_search_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy):
-        binary_search_tree<tkey, tvalue>::template_method_basics::template_method_basics(tree),
-        _insertion_strategy(insertion_strategy)
+    binary_search_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::template_method_basics::template_method_basics(tree)
 { }
 
 template<
@@ -2735,11 +2583,11 @@ void binary_search_tree<tkey, tvalue>::insertion_template_method::insert(
     
     if (*(path.top()) != nullptr)
     {
-        switch (_insertion_strategy)
+        switch (this->_tree->_insertion_strategy)
         {
-            case insertion_of_existent_key_attempt_strategy::throw_an_exception:
-                throw insertion_of_existent_key_attempt_exception(key);
-            case insertion_of_existent_key_attempt_strategy::update_value:
+            case search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception:
+                throw typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception(key);
+            case search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::update_value:
                 (*(path.top()))->value = value;
                 break;
         }
@@ -2764,11 +2612,11 @@ void binary_search_tree<tkey, tvalue>::insertion_template_method::insert(
     
     if (*(path.top()) != nullptr)
     {
-        switch (_insertion_strategy)
+        switch (this->_tree->_insertion_strategy)
         {
-            case insertion_of_existent_key_attempt_strategy::throw_an_exception:
-                throw insertion_of_existent_key_attempt_exception(key);
-            case insertion_of_existent_key_attempt_strategy::update_value:
+            case search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception:
+                throw typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception(key);
+            case search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::update_value:
                 (*(path.top()))->value = std::move(value);
                 break;
         }
@@ -2820,7 +2668,7 @@ tvalue const &binary_search_tree<tkey, tvalue>::obtaining_template_method::obtai
     
     if (*(path.top()) == nullptr)
     {
-        throw obtaining_of_nonexistent_key_attempt_exception(key);
+        throw typename search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception(key);
     }
     
     tvalue const &got_value = (*(path.top()))->value;
@@ -2916,10 +2764,8 @@ template<
     typename tkey,
     typename tvalue>
 binary_search_tree<tkey, tvalue>::disposal_template_method::disposal_template_method(
-    binary_search_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
-        binary_search_tree<tkey, tvalue>::template_method_basics(tree),
-        _disposal_strategy(disposal_strategy)
+    binary_search_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::template_method_basics(tree)
 { }
 
 template<
@@ -2932,11 +2778,11 @@ tvalue binary_search_tree<tkey, tvalue>::disposal_template_method::dispose(
     
     if (*(path.top()) == nullptr)
     {
-        switch (_disposal_strategy)
+        switch (this->_tree->_disposal_strategy)
         {
-            case disposal_of_nonexistent_key_attempt_strategy::throw_an_exception:
-                throw disposal_of_nonexistent_key_attempt_exception(key);
-            case disposal_of_nonexistent_key_attempt_strategy::do_nothing:
+            case search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception:
+                throw typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception(key);
+            case search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::do_nothing:
                 return tvalue();
         }
     }
@@ -3003,8 +2849,10 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
     typename binary_search_tree<tkey, tvalue>::disposal_template_method *disposal_template,
     std::function<int(tkey const &, tkey const &)> comparer,
     allocator *allocator,
-    logger *logger):
-        search_tree<tkey, tvalue>(comparer, allocator, logger),
+    logger *logger,
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
+        search_tree<tkey, tvalue>(comparer, allocator, logger, insertion_strategy, disposal_strategy),
         _insertion_template(insertion_template),
         _obtaining_template(obtaining_template),
         _disposal_template(disposal_template)
@@ -3017,15 +2865,15 @@ binary_search_tree<tkey, tvalue>::binary_search_tree(
     std::function<int(tkey const &, tkey const &)> comparer,
     allocator *allocator,
     logger *logger,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
-        search_tree<tkey, tvalue>(comparer, allocator, logger)
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
+        search_tree<tkey, tvalue>(comparer, allocator, logger, insertion_strategy, disposal_strategy)
 {
     try
     {
-        _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this, insertion_strategy);
+        _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this);
         _obtaining_template = new binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
-        _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this, disposal_strategy);
+        _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this);
     }
     catch (const std::bad_alloc& ex)
     {
@@ -3041,14 +2889,15 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::binary_search_tree(
     binary_search_tree<tkey, tvalue> const &other):
-        search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger())
+        search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger(),
+                other._insertion_strategy, other._disposal_strategy)
 {
     try
     {
         this->_root = copy(reinterpret_cast<node*>(other._root));
-        _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy);
+        _insertion_template = new binary_search_tree<tkey, tvalue>::insertion_template_method(this);
         _obtaining_template = new binary_search_tree<tkey, tvalue>::obtaining_template_method(this);
-        _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy);
+        _disposal_template = new binary_search_tree<tkey, tvalue>::disposal_template_method(this);
     }
     catch (const std::bad_alloc& ex)
     {
@@ -3065,7 +2914,8 @@ template<
     typename tvalue>
 binary_search_tree<tkey, tvalue>::binary_search_tree(
     binary_search_tree<tkey, tvalue> &&other) noexcept:
-    search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger())
+    search_tree<tkey, tvalue>(other._keys_comparer, other.get_allocator(), other.get_logger(),
+            other._insertion_strategy, other._disposal_strategy)
 {
     this->_root = other._root;
     
@@ -3090,12 +2940,14 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
     if (this != &other)
     {
         clear(reinterpret_cast<node**>(&this->_root));
+        this->_root = copy(reinterpret_cast<node*>(other._root));
         
+        this->_keys_comparer = other._keys_comparer;
         this->_allocator = other._allocator;
         this->_logger = other._logger;
-        this->_keys_comparer = other._keys_comparer;
         
-        this->_root = copy(reinterpret_cast<node*>(other._root));
+        this->_insertion_strategy = other._insertion_strategy;
+        this->_disposal_strategy = other._disposal_strategy;
         
         *_insertion_template = *(other._insertion_template);
         *_obtaining_template = *(other._obtaining_template);
@@ -3123,6 +2975,8 @@ binary_search_tree<tkey, tvalue> &binary_search_tree<tkey, tvalue>::operator=(
         this->_allocator = other._allocator;
         this->_logger = other._logger;
         this->_root = other._root;
+        this->_insertion_strategy = other._insertion_strategy;
+        this->_disposal_strategy = other._disposal_strategy;
         
         _insertion_template = other._insertion_template;
         _obtaining_template = other._obtaining_template;
@@ -3377,40 +3231,6 @@ tvalue binary_search_tree<tkey, tvalue>::dispose(
 }
 
 #pragma endregion associative_containers contract implementations
-
-template<
-    typename tkey,
-    typename tvalue>
-void binary_search_tree<tkey, tvalue>::set_insertion_strategy(
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept
-{
-    this->trace_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : called.")
-        ->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : called.")
-        ->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : insertion strategy set to "
-            + (insertion_strategy == insertion_of_existent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
-        
-    _insertion_template->_insertion_strategy = insertion_strategy;
-    
-    this->trace_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : successfuly finished.")
-        ->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : successfuly finished.");
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-void binary_search_tree<tkey, tvalue>::set_disposal_strategy(
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
-{
-    this->trace_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : called.")
-        ->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : called.")
-        ->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : disposal strategy set to "
-            + (disposal_strategy == disposal_of_nonexistent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
-    
-    _disposal_template->_disposal_strategy = disposal_strategy;
-    
-    this->trace_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : successfuly finished.")
-        ->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : successfuly finished.");
-}
 
 #pragma region iterators requesting implementation
 

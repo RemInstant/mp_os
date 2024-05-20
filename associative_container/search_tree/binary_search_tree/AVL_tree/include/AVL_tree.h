@@ -95,8 +95,7 @@ private:
     public:
         
         explicit insertion_template_method(
-            AVL_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy);
+            AVL_tree<tkey, tvalue> *tree);
     
     private:
         
@@ -117,8 +116,7 @@ private:
     public:
         
         explicit disposal_template_method(
-            AVL_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
+            AVL_tree<tkey, tvalue> *tree);
         
     private:
     
@@ -138,15 +136,13 @@ public:
         std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
-                binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
-                binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
     
-    ~AVL_tree() noexcept final;
-    
     AVL_tree(
         AVL_tree<tkey, tvalue> const &other);
     
@@ -154,10 +150,12 @@ public:
         AVL_tree<tkey, tvalue> &&other) noexcept;
     
     AVL_tree<tkey, tvalue> &operator=(
-        AVL_tree<tkey, tvalue> const &other);
+        AVL_tree<tkey, tvalue> const &other) = default;
     
     AVL_tree<tkey, tvalue> &operator=(
-        AVL_tree<tkey, tvalue> &&other) noexcept;
+        AVL_tree<tkey, tvalue> &&other) noexcept = default;
+    
+    ~AVL_tree() noexcept final = default;
 
 private:
 
@@ -401,9 +399,8 @@ template<
     typename tkey,
     typename tvalue>
 AVL_tree<tkey, tvalue>::insertion_template_method::insertion_template_method(
-    AVL_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy):
-        binary_search_tree<tkey, tvalue>::insertion_template_method(tree, insertion_strategy)
+    AVL_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::insertion_template_method(tree)
 { }
 
 template<
@@ -429,9 +426,8 @@ template<
     typename tkey,
     typename tvalue>
 AVL_tree<tkey, tvalue>::disposal_template_method::disposal_template_method(
-    AVL_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
-        binary_search_tree<tkey, tvalue>::disposal_template_method(tree, disposal_strategy)
+    AVL_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::disposal_template_method(tree)
 { }
 
 template<
@@ -463,13 +459,13 @@ AVL_tree<tkey, tvalue>::AVL_tree(
     std::function<int(tkey const &, tkey const &)> comparer,
     allocator *allocator,
     logger *logger,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
         binary_search_tree<tkey, tvalue>(
-            new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this, insertion_strategy),
+            new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this),
             new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
-            new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this, disposal_strategy),
-            comparer, allocator, logger)
+            new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this),
+            comparer, allocator, logger, insertion_strategy, disposal_strategy)
 {
     if (this->_insertion_template == nullptr || this->_obtaining_template == nullptr ||
             this->_disposal_template == nullptr)
@@ -487,10 +483,11 @@ template<
 AVL_tree<tkey, tvalue>::AVL_tree(
     AVL_tree<tkey, tvalue> const &other):
         binary_search_tree<tkey, tvalue>(
-            new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy),
+            new(std::nothrow) AVL_tree<tkey, tvalue>::insertion_template_method(this),
             new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
-            new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy),
-            other._keys_comparer, other.get_allocator(), other.get_logger())
+            new(std::nothrow) AVL_tree<tkey, tvalue>::disposal_template_method(this),
+            other._keys_comparer, other.get_allocator(), other.get_logger(),
+                    other._insertion_strategy, other._disposal_strategy)
 {
     try
     {
@@ -518,40 +515,6 @@ template<
 AVL_tree<tkey, tvalue>::AVL_tree(
     AVL_tree<tkey, tvalue> &&other) noexcept:
         binary_search_tree<tkey, tvalue>(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-AVL_tree<tkey, tvalue> &AVL_tree<tkey, tvalue>::operator=(
-    AVL_tree<tkey, tvalue> const &other)
-{
-    if (this != &other)
-    {
-        binary_search_tree<tkey, tvalue>::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-AVL_tree<tkey, tvalue> &AVL_tree<tkey, tvalue>::operator=(
-    AVL_tree<tkey, tvalue> &&other) noexcept
-{
-    if (this != &other)
-    {
-        binary_search_tree<tkey, tvalue>::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-AVL_tree<tkey, tvalue>::~AVL_tree() noexcept
 { }
 
 #pragma endregion avl construction, assignment, destruction implementation

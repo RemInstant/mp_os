@@ -98,8 +98,7 @@ private:
     public:
         
         explicit insertion_template_method(
-            red_black_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy);
+            red_black_tree<tkey, tvalue> *tree);
     
     private:
         
@@ -120,8 +119,7 @@ private:
     public:
         
         explicit disposal_template_method(
-            red_black_tree<tkey, tvalue> *tree,
-            typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy);
+            red_black_tree<tkey, tvalue> *tree);
         
     private:
     
@@ -148,30 +146,30 @@ private:
 public:
     
     explicit red_black_tree(
-        std::function<int(tkey const &, tkey const &)> comparer = associative_container<tkey, tvalue>::default_key_comparer(),
+        std::function<int(tkey const &, tkey const &)> comparer = typename associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
         logger *logger = nullptr,
-        typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
-                binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
-        typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
-                binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
 
 public:
     
-    ~red_black_tree() noexcept final;
-    
     red_black_tree(
-        red_black_tree<tkey, tvalue> const &other);
-    
-    red_black_tree<tkey, tvalue> &operator=(
         red_black_tree<tkey, tvalue> const &other);
     
     red_black_tree(
         red_black_tree<tkey, tvalue> &&other) noexcept;
     
     red_black_tree<tkey, tvalue> &operator=(
-        red_black_tree<tkey, tvalue> &&other) noexcept;
-
+        red_black_tree<tkey, tvalue> const &other) = default;
+    
+    red_black_tree<tkey, tvalue> &operator=(
+        red_black_tree<tkey, tvalue> &&other) noexcept = default;
+    
+    ~red_black_tree() noexcept final = default;
+    
 private:
 
     inline size_t get_node_size() const noexcept override;
@@ -350,9 +348,8 @@ template<
     typename tkey,
     typename tvalue>
 red_black_tree<tkey, tvalue>::insertion_template_method::insertion_template_method(
-    red_black_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy):
-        binary_search_tree<tkey, tvalue>::insertion_template_method(tree, insertion_strategy)
+    red_black_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::insertion_template_method(tree)
 { }
 
 template<
@@ -443,9 +440,8 @@ template<
     typename tkey,
     typename tvalue>
 red_black_tree<tkey, tvalue>::disposal_template_method::disposal_template_method(
-    red_black_tree<tkey, tvalue> *tree,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
-        binary_search_tree<tkey, tvalue>::disposal_template_method(tree, disposal_strategy)
+    red_black_tree<tkey, tvalue> *tree):
+        binary_search_tree<tkey, tvalue>::disposal_template_method(tree)
 { }
 
 template<
@@ -647,13 +643,13 @@ red_black_tree<tkey, tvalue>::red_black_tree(
     std::function<int(tkey const &, tkey const &)> comparer,
     allocator *allocator,
     logger *logger,
-    typename binary_search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
-    typename binary_search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
         binary_search_tree<tkey, tvalue>(
-            new(std::nothrow) red_black_tree<tkey, tvalue>::insertion_template_method(this, insertion_strategy),
+            new(std::nothrow) red_black_tree<tkey, tvalue>::insertion_template_method(this),
             new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
-            new(std::nothrow) red_black_tree<tkey, tvalue>::disposal_template_method(this, disposal_strategy),
-            comparer, allocator, logger)
+            new(std::nothrow) red_black_tree<tkey, tvalue>::disposal_template_method(this),
+            comparer, allocator, logger, insertion_strategy, disposal_strategy)
 {
     if (this->_insertion_template == nullptr || this->_obtaining_template == nullptr ||
             this->_disposal_template == nullptr)
@@ -671,10 +667,11 @@ template<
 red_black_tree<tkey, tvalue>::red_black_tree(
     red_black_tree<tkey, tvalue> const &other):
         binary_search_tree<tkey, tvalue>(
-            new(std::nothrow) red_black_tree<tkey, tvalue>::insertion_template_method(this, other._insertion_template->_insertion_strategy),
+            new(std::nothrow) red_black_tree<tkey, tvalue>::insertion_template_method(this),
             new(std::nothrow) typename binary_search_tree<tkey, tvalue>::obtaining_template_method(this),
-            new(std::nothrow) red_black_tree<tkey, tvalue>::disposal_template_method(this, other._disposal_template->_disposal_strategy),
-            other._keys_comparer, other.get_allocator(), other.get_logger())
+            new(std::nothrow) red_black_tree<tkey, tvalue>::disposal_template_method(this),
+            other._keys_comparer, other.get_allocator(), other.get_logger(),
+                    other._insertion_strategy, other._disposal_strategy)
 {
     try
     {
@@ -702,40 +699,6 @@ template<
 red_black_tree<tkey, tvalue>::red_black_tree(
     red_black_tree<tkey, tvalue> &&other) noexcept:
         binary_search_tree<tkey, tvalue>(std::move(other))
-{ }
-
-template<
-    typename tkey,
-    typename tvalue>
-red_black_tree<tkey, tvalue> &red_black_tree<tkey, tvalue>::operator=(
-    red_black_tree<tkey, tvalue> const &other)
-{
-    if (this != &other)
-    {
-        binary_search_tree<tkey, tvalue>::operator=(other);
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-red_black_tree<tkey, tvalue> &red_black_tree<tkey, tvalue>::operator=(
-    red_black_tree<tkey, tvalue> &&other) noexcept
-{
-    if (this != &other)
-    {
-        binary_search_tree<tkey, tvalue>::operator=(std::move(other));
-    }
-    
-    return *this;
-}
-
-template<
-    typename tkey,
-    typename tvalue>
-red_black_tree<tkey, tvalue>::~red_black_tree() noexcept
 { }
 
 #pragma endregion rbt construction, assignment, destruction implementation
