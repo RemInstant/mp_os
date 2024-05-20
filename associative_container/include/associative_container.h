@@ -37,7 +37,17 @@ public:
         
         tkey key;
         tvalue value;
+    
+    public:
+    
+        key_value_pair(
+            tkey const &key,
+            tvalue const &value);
         
+        key_value_pair(
+            tkey const &key,
+            tvalue&& value);
+    
     };
     
     struct key_value_ptr_pair
@@ -109,5 +119,23 @@ int associative_container<tkey, tvalue>::default_key_comparer::operator()(
     }
     return -1;
 }
+
+template<
+    typename tkey,
+    typename tvalue>
+associative_container<tkey, tvalue>::key_value_pair::key_value_pair(
+    tkey const &key,
+    tvalue const &value):
+        key(key), value(value)
+{ }
+
+template<
+    typename tkey,
+    typename tvalue>
+associative_container<tkey, tvalue>::key_value_pair::key_value_pair(
+    tkey const &key,
+    tvalue&& value):
+        key(key), value(std::move(value))
+{ }
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_ASSOCIATIVE_CONTAINER_H
