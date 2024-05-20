@@ -128,7 +128,7 @@ logger *create_logger(
     bool use_console_stream = true,
     logger::severity console_stream_severity = logger::severity::debug)
 {
-    return client_logger_builder().build();
+    //return client_logger_builder().build();
 
     logger_builder *builder = new client_logger_builder();
 
@@ -768,6 +768,244 @@ TEST(bTreeNegativeTests, test3)
     ASSERT_THROW(tree->obtain(1001), std::logic_error);
 
     logger->trace("bTreeNegativeTests.test3 finished");
+
+    delete tree;
+    delete logger;
+}
+
+TEST(bTreeMyPositiveTests, test1)
+{
+    std::function<int(int const &, int const &)> keys_comparer = comparison::int_comparer();
+    std::function<int(std::string const &, std::string const &)> values_comparer = comparison::stdstring_comparer();
+
+    logger *logger = create_logger(std::vector<std::pair<std::string, logger::severity>>
+    {
+        { "b_tree_tests_logs.txt", logger::severity::trace }
+    });
+
+    logger->trace("bTreeMyPositiveTests.test1 started");
+
+    std::vector<std::tuple<size_t, size_t, int, std::string>> expected_result =
+    {
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 2, "b"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 3, "d"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 4, "e"),
+        std::tuple<size_t, size_t, int, std::string>(0, 0, 15, "c"),
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 45, "k"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 101, "j"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 456, "h"),
+        std::tuple<size_t, size_t, int, std::string>(1, 3, 534, "m")
+    };
+
+    search_tree<int, std::string> *tree = new b_tree<int, std::string>(4, keys_comparer, nullptr, logger);
+
+    tree->insert(1, std::string("a"));
+    tree->insert(2, std::string("b"));
+    tree->insert(15, std::string("c"));
+    tree->insert(3, std::string("d"));
+    tree->insert(4, std::string("e"));
+    tree->insert(100, std::string("f"));
+    tree->insert(24, std::string("g"));
+    tree->insert(456, std::string("h"));
+    tree->insert(101, std::string("j"));
+    tree->insert(45, std::string("k"));
+    tree->insert(193, std::string("l"));
+    tree->insert(534, std::string("m"));
+    
+    b_tree<int, std::string> tree2 = *dynamic_cast<b_tree<int, std::string> *>(tree);
+    
+    auto first_disposed = std::move(tree2.dispose(1));
+    auto second_disposed = std::move(tree2.dispose(100));
+    auto third_disposed = std::move(tree2.dispose(193));
+    auto fourth_disposed = std::move(tree2.dispose(24));
+
+    EXPECT_TRUE(infix_const_iterator_test(tree2, expected_result, keys_comparer, values_comparer));
+
+    EXPECT_TRUE(values_comparer(first_disposed, "a") == 0);
+    EXPECT_TRUE(values_comparer(second_disposed, "f") == 0);
+    EXPECT_TRUE(values_comparer(third_disposed, "l") == 0);
+    EXPECT_TRUE(values_comparer(fourth_disposed, "g") == 0);
+
+    logger->trace("bTreeMyPositiveTests.test1 finished");
+
+    delete tree;
+    delete logger;
+}
+
+TEST(bTreeMyPositiveTests, test2)
+{
+    std::function<int(int const &, int const &)> keys_comparer = comparison::int_comparer();
+    std::function<int(std::string const &, std::string const &)> values_comparer = comparison::stdstring_comparer();
+
+    logger *logger = create_logger(std::vector<std::pair<std::string, logger::severity>>
+    {
+        { "b_tree_tests_logs.txt", logger::severity::trace }
+    });
+
+    logger->trace("bTreeMyPositiveTests.test2 started");
+
+    std::vector<std::tuple<size_t, size_t, int, std::string>> expected_result =
+    {
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 2, "b"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 3, "d"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 4, "e"),
+        std::tuple<size_t, size_t, int, std::string>(0, 0, 15, "c"),
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 45, "k"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 101, "j"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 456, "h"),
+        std::tuple<size_t, size_t, int, std::string>(1, 3, 534, "m")
+    };
+
+    search_tree<int, std::string> *tree = new b_tree<int, std::string>(4, keys_comparer, nullptr, logger);
+
+    tree->insert(1, std::string("a"));
+    tree->insert(2, std::string("b"));
+    tree->insert(15, std::string("c"));
+    tree->insert(3, std::string("d"));
+    tree->insert(4, std::string("e"));
+    tree->insert(100, std::string("f"));
+    tree->insert(24, std::string("g"));
+    tree->insert(456, std::string("h"));
+    tree->insert(101, std::string("j"));
+    tree->insert(45, std::string("k"));
+    tree->insert(193, std::string("l"));
+    tree->insert(534, std::string("m"));
+    
+    b_tree<int, std::string> tree2 = std::move(*dynamic_cast<b_tree<int, std::string> *>(tree));
+    
+    auto first_disposed = std::move(tree2.dispose(1));
+    auto second_disposed = std::move(tree2.dispose(100));
+    auto third_disposed = std::move(tree2.dispose(193));
+    auto fourth_disposed = std::move(tree2.dispose(24));
+
+    EXPECT_TRUE(infix_const_iterator_test(tree2, expected_result, keys_comparer, values_comparer));
+
+    EXPECT_TRUE(values_comparer(first_disposed, "a") == 0);
+    EXPECT_TRUE(values_comparer(second_disposed, "f") == 0);
+    EXPECT_TRUE(values_comparer(third_disposed, "l") == 0);
+    EXPECT_TRUE(values_comparer(fourth_disposed, "g") == 0);
+
+    logger->trace("bTreeMyPositiveTests.test2 finished");
+
+    delete tree;
+    delete logger;
+}
+
+TEST(bTreeMyPositiveTests, test3)
+{
+    std::function<int(int const &, int const &)> keys_comparer = comparison::int_comparer();
+    std::function<int(std::string const &, std::string const &)> values_comparer = comparison::stdstring_comparer();
+
+    logger *logger = create_logger(std::vector<std::pair<std::string, logger::severity>>
+    {
+        { "b_tree_tests_logs.txt", logger::severity::trace }
+    });
+
+    logger->trace("bTreeMyPositiveTests.test3 started");
+
+    std::vector<std::tuple<size_t, size_t, int, std::string>> expected_result =
+    {
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 2, "b"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 3, "d"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 4, "e"),
+        std::tuple<size_t, size_t, int, std::string>(0, 0, 15, "c"),
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 45, "k"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 101, "j"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 456, "h"),
+        std::tuple<size_t, size_t, int, std::string>(1, 3, 534, "m")
+    };
+
+    search_tree<int, std::string> *tree = new b_tree<int, std::string>(4, keys_comparer, nullptr, logger);
+
+    tree->insert(1, std::string("a"));
+    tree->insert(2, std::string("b"));
+    tree->insert(15, std::string("c"));
+    tree->insert(3, std::string("d"));
+    tree->insert(4, std::string("e"));
+    tree->insert(100, std::string("f"));
+    tree->insert(24, std::string("g"));
+    tree->insert(456, std::string("h"));
+    tree->insert(101, std::string("j"));
+    tree->insert(45, std::string("k"));
+    tree->insert(193, std::string("l"));
+    tree->insert(534, std::string("m"));
+    
+    b_tree<int, std::string> tree2(15);
+    tree2 = *dynamic_cast<b_tree<int, std::string> *>(tree);
+    
+    auto first_disposed = std::move(tree2.dispose(1));
+    auto second_disposed = std::move(tree2.dispose(100));
+    auto third_disposed = std::move(tree2.dispose(193));
+    auto fourth_disposed = std::move(tree2.dispose(24));
+
+    EXPECT_TRUE(infix_const_iterator_test(tree2, expected_result, keys_comparer, values_comparer));
+
+    EXPECT_TRUE(values_comparer(first_disposed, "a") == 0);
+    EXPECT_TRUE(values_comparer(second_disposed, "f") == 0);
+    EXPECT_TRUE(values_comparer(third_disposed, "l") == 0);
+    EXPECT_TRUE(values_comparer(fourth_disposed, "g") == 0);
+
+    logger->trace("bTreeMyPositiveTests.test3 finished");
+
+    delete tree;
+    delete logger;
+}
+
+TEST(bTreeMyPositiveTests, test4)
+{
+    std::function<int(int const &, int const &)> keys_comparer = comparison::int_comparer();
+    std::function<int(std::string const &, std::string const &)> values_comparer = comparison::stdstring_comparer();
+
+    logger *logger = create_logger(std::vector<std::pair<std::string, logger::severity>>
+    {
+        { "b_tree_tests_logs.txt", logger::severity::trace }
+    });
+
+    logger->trace("bTreeMyPositiveTests.test4 started");
+
+    std::vector<std::tuple<size_t, size_t, int, std::string>> expected_result =
+    {
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 2, "b"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 3, "d"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 4, "e"),
+        std::tuple<size_t, size_t, int, std::string>(0, 0, 15, "c"),
+        std::tuple<size_t, size_t, int, std::string>(1, 0, 45, "k"),
+        std::tuple<size_t, size_t, int, std::string>(1, 1, 101, "j"),
+        std::tuple<size_t, size_t, int, std::string>(1, 2, 456, "h"),
+        std::tuple<size_t, size_t, int, std::string>(1, 3, 534, "m")
+    };
+
+    search_tree<int, std::string> *tree = new b_tree<int, std::string>(4, keys_comparer, nullptr, logger);
+
+    tree->insert(1, std::string("a"));
+    tree->insert(2, std::string("b"));
+    tree->insert(15, std::string("c"));
+    tree->insert(3, std::string("d"));
+    tree->insert(4, std::string("e"));
+    tree->insert(100, std::string("f"));
+    tree->insert(24, std::string("g"));
+    tree->insert(456, std::string("h"));
+    tree->insert(101, std::string("j"));
+    tree->insert(45, std::string("k"));
+    tree->insert(193, std::string("l"));
+    tree->insert(534, std::string("m"));
+    
+    b_tree<int, std::string> tree2(15);
+    tree2 = std::move(*dynamic_cast<b_tree<int, std::string> *>(tree));
+    
+    auto first_disposed = std::move(tree2.dispose(1));
+    auto second_disposed = std::move(tree2.dispose(100));
+    auto third_disposed = std::move(tree2.dispose(193));
+    auto fourth_disposed = std::move(tree2.dispose(24));
+
+    EXPECT_TRUE(infix_const_iterator_test(tree2, expected_result, keys_comparer, values_comparer));
+
+    EXPECT_TRUE(values_comparer(first_disposed, "a") == 0);
+    EXPECT_TRUE(values_comparer(second_disposed, "f") == 0);
+    EXPECT_TRUE(values_comparer(third_disposed, "l") == 0);
+    EXPECT_TRUE(values_comparer(fourth_disposed, "g") == 0);
+
+    logger->trace("bTreeMyPositiveTests.test4 finished");
 
     delete tree;
     delete logger;
