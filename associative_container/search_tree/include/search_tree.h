@@ -6,6 +6,7 @@
 #include <stack>
 #include <vector>
 
+#include <typename_holder.h>
 #include <allocator.h>
 #include <allocator_guardant.h>
 #include <associative_container.h>
@@ -18,6 +19,7 @@ template<
     typename tvalue>
 class search_tree:
     public associative_container<tkey, tvalue>,
+    protected typename_holder,
     protected allocator_guardant,
     protected logger_guardant
 {
@@ -45,15 +47,97 @@ public:
         virtual ~common_node() noexcept;
         
     };
-
+    
+    #pragma region target operations strategies definition
+    
+    enum class insertion_of_existent_key_attempt_strategy
+    {
+        update_value,
+        throw_an_exception
+    };
+    
+    enum class disposal_of_nonexistent_key_attempt_strategy
+    {
+        do_nothing,
+        throw_an_exception
+    };
+    
+    #pragma endregion target operations strategies definition
+    
+    #pragma region target operations associated exception types
+    
+    class insertion_of_existent_key_attempt_exception final:
+        public std::logic_error
+    {
+    
+    private:
+        
+        tkey _key;
+    
+    public:
+        
+        explicit insertion_of_existent_key_attempt_exception(
+            tkey const &key);
+        
+    public:
+        
+        tkey const &get_key() const noexcept;
+    
+    };
+    
+    class obtaining_of_nonexistent_key_attempt_exception final:
+        public std::logic_error
+    {
+    
+    private:
+        
+        tkey _key;
+        
+    public:
+        
+        explicit obtaining_of_nonexistent_key_attempt_exception(
+            tkey const &key);
+        
+    public:
+        
+        tkey const &get_key() const noexcept;
+        
+    };
+    
+    class disposal_of_nonexistent_key_attempt_exception final:
+        public std::logic_error
+    {
+    
+    private:
+        
+        tkey _key;
+    
+    public:
+        
+        explicit disposal_of_nonexistent_key_attempt_exception(
+            tkey const &key);
+        
+    public:
+        
+        tkey const &get_key() const noexcept;
+    
+    };
+    
+    #pragma endregion target operations associated exception types
+    
 protected:
     
     std::function<int(tkey const &, tkey const &)> _keys_comparer;
     logger *_logger;
     allocator *_allocator;
     void *_root;
-
+    
+    insertion_of_existent_key_attempt_strategy _insertion_strategy;
+    disposal_of_nonexistent_key_attempt_strategy _disposal_strategy;
+    
 protected:
+
+    #pragma region node operations
 
     common_node *create_node(
         size_t t) const;
@@ -83,6 +167,8 @@ protected:
         typename search_tree<tkey, tvalue>::common_node *parent,
         size_t left_subtree_index);
     
+    #pragma endregion common node operations
+    
 protected:
     
     std::stack<std::pair<typename search_tree<tkey, tvalue>::common_node**, int>> find_path(
@@ -91,9 +177,13 @@ protected:
 protected:
     
     explicit search_tree(
-        std::function<int(tkey const &, tkey const &)> keys_comparer = associative_container<tkey, tvalue>::default_key_comparer(),
+        std::function<int(tkey const &, tkey const &)> keys_comparer = typename associative_container<tkey, tvalue>::default_key_comparer(),
         allocator *allocator = nullptr,
-        logger *logger = nullptr);
+        logger *logger = nullptr,
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy =
+                search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy::throw_an_exception,
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy =
+                search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy::throw_an_exception);
     
 public:
     
@@ -102,16 +192,27 @@ public:
         tkey const &upper_bound,
         bool lower_bound_inclusive,
         bool upper_bound_inclusive) = 0;
-
+public:
+    
+    void set_insertion_strategy(
+        typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept;
+    
+    void set_disposal_strategy(
+        typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept;
+    
 protected:
     
     [[nodiscard]] inline allocator *get_allocator() const final;
     
     [[nodiscard]] inline logger *get_logger() const final;
+
+private:
+    
+    inline std::string get_typename() const noexcept override;
     
 };
 
-#pragma region search_tree<tkey, tvalue>::node implementation
+#pragma region common node implementation
 
 template<
     typename tkey,
@@ -137,6 +238,65 @@ search_tree<tkey, tvalue>::common_node::~common_node() noexcept
 {
     virtual_size = 0;
 }
+
+#pragma endregion common node implementation
+
+#pragma region target operations associated exception types implementation
+
+template<
+    typename tkey,
+    typename tvalue>
+search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception::insertion_of_existent_key_attempt_exception(
+    tkey const &key):
+        std::logic_error("Attempt to insert already existing key inside the tree."),
+        _key(key)
+{ }
+
+template<
+    typename tkey,
+    typename tvalue>
+tkey const &search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_exception::get_key() const noexcept
+{
+    return _key;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception::obtaining_of_nonexistent_key_attempt_exception(
+    tkey const &key):
+        std::logic_error("Attempt to obtain a value by non-existing key from the tree."),
+        _key(key)
+{ }
+
+template<
+    typename tkey,
+    typename tvalue>
+tkey const &search_tree<tkey, tvalue>::obtaining_of_nonexistent_key_attempt_exception::get_key() const noexcept
+{
+    return _key;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception::disposal_of_nonexistent_key_attempt_exception(
+    tkey const &key):
+        std::logic_error("Attempt to dispose a value by non-existing key from the tree."),
+        _key(key)
+{ }
+
+template<
+    typename tkey,
+    typename tvalue>
+tkey const &search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_exception::get_key() const noexcept
+{
+    return _key;
+}
+
+#pragma endregion target operations associated exception types implementation
+
+#pragma region common node operations implementation
 
 template<
     typename tkey,
@@ -249,7 +409,8 @@ void search_tree<tkey, tvalue>::node_insert(
 template<
     typename tkey,
     typename tvalue>
-std::pair<typename search_tree<tkey, tvalue>::common_node *, typename associative_container<tkey, tvalue>::key_value_pair> search_tree<tkey, tvalue>::node_split(
+std::pair<typename search_tree<tkey, tvalue>::common_node *, typename associative_container<tkey, tvalue>::key_value_pair>
+search_tree<tkey, tvalue>::node_split(
     typename search_tree<tkey, tvalue>::common_node *node,
     typename associative_container<tkey, tvalue>::key_value_pair &&kvp,
     size_t subtree_index,
@@ -257,6 +418,7 @@ std::pair<typename search_tree<tkey, tvalue>::common_node *, typename associativ
 {
     size_t const t = (node->virtual_size + 1) / 2;
     size_t const mediant_index = t;
+    common_node *new_node = create_node(t); // try create node before structure change
     
     if (subtree_index != mediant_index)
     {
@@ -286,8 +448,6 @@ std::pair<typename search_tree<tkey, tvalue>::common_node *, typename associativ
         }
     }
     
-    // TODO: try catch
-    common_node *new_node = create_node(t);
     for (size_t i = 0; i < t - 1; ++i)
     {
         allocator::construct(new_node->keys_and_values + i, std::move(node->keys_and_values[t + i]));
@@ -309,28 +469,27 @@ template<
     typename tvalue>
 void search_tree<tkey, tvalue>::node_merge(
     typename search_tree<tkey, tvalue>::common_node *parent,
-    size_t left_subtree_index)
+    size_t parent_index)
 {
-    auto *left_subtree = parent->subtrees[left_subtree_index];
-    auto *right_subtree = parent->subtrees[left_subtree_index + 1];
-    
-    // is it necessary?
-    if (left_subtree == nullptr || right_subtree == nullptr)
+    if (parent_index >= parent->virtual_size)
     {
-        return;
+        throw std::logic_error("invalid btree merge");
     }
     
-    allocator::construct(left_subtree->keys_and_values + left_subtree->virtual_size, std::move(parent->keys_and_values[left_subtree_index]));
-    for (size_t i = left_subtree_index; i < parent->virtual_size; ++i)
+    auto *left_subtree = parent->subtrees[parent_index];
+    auto *right_subtree = parent->subtrees[parent_index + 1];
+    
+    allocator::construct(left_subtree->keys_and_values + left_subtree->virtual_size, std::move(parent->keys_and_values[parent_index]));
+    ++left_subtree->virtual_size;
+    
+    for (size_t i = parent_index; i < parent->virtual_size; ++i)
     {
         std::swap(parent->keys_and_values[i], parent->keys_and_values[i+1]);
         std::swap(parent->subtrees[i+1], parent->subtrees[i+2]);
     }
     
-    allocator::destruct(parent->keys_and_values + (parent->virtual_size - 1));
-    
-    ++left_subtree->virtual_size;
     --parent->virtual_size;
+    allocator::destruct(parent->keys_and_values + parent->virtual_size);
     
     for (size_t i = 0; i < right_subtree->virtual_size; ++i)
     {
@@ -342,7 +501,7 @@ void search_tree<tkey, tvalue>::node_merge(
     destroy_node(right_subtree);
 }
 
-#pragma endregion search_tree<tkey, tvalue>::node implementation
+#pragma endregion common node operations implementation
 
 template<
     typename tkey,
@@ -355,11 +514,11 @@ std::stack<std::pair<typename search_tree<tkey, tvalue>::common_node **, int>> s
     int index = -1;
     if (_root == nullptr)
     {
-        result.push(std::make_pair(&_root, index));
+        result.push(std::make_pair(reinterpret_cast<common_node**>(&_root), index));
         return result;
     }
     
-    common_node **iterator = &_root;
+    common_node **iterator = reinterpret_cast<common_node**>(&_root);
     while (*iterator != nullptr && index < 0)
     {
         index = node_find_path(*iterator, key, 0, (*iterator)->virtual_size - 1);
@@ -374,19 +533,46 @@ std::stack<std::pair<typename search_tree<tkey, tvalue>::common_node **, int>> s
     return result;
 }
 
-
 template<
     typename tkey,
     typename tvalue>
 search_tree<tkey, tvalue>::search_tree(
     std::function<int(tkey const &, tkey const &)> keys_comparer,
     allocator *allocator,
-    logger *logger):
+    logger *logger,
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy,
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy):
         _keys_comparer(keys_comparer),
         _allocator(allocator),
         _logger(logger),
-        _root(nullptr)
+        _root(nullptr),
+        _insertion_strategy(insertion_strategy),
+        _disposal_strategy(disposal_strategy)
 { }
+
+template<
+    typename tkey,
+    typename tvalue>
+void search_tree<tkey, tvalue>::set_insertion_strategy(
+    typename search_tree<tkey, tvalue>::insertion_of_existent_key_attempt_strategy insertion_strategy) noexcept
+{
+    _insertion_strategy = insertion_strategy;
+    
+    this->debug_with_guard(get_typename() + "::set_insertion_strategy(insertion_of_existent_key_attempt_strategy) : insertion strategy set to "
+            + (insertion_strategy == insertion_of_existent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+void search_tree<tkey, tvalue>::set_disposal_strategy(
+    typename search_tree<tkey, tvalue>::disposal_of_nonexistent_key_attempt_strategy disposal_strategy) noexcept
+{
+    _disposal_strategy = disposal_strategy;
+    
+    this->debug_with_guard(get_typename() + "::set_disposal_strategy(disposal_of_nonexistent_key_attempt_strategy) : disposal strategy set to "
+            + (disposal_strategy == disposal_of_nonexistent_key_attempt_strategy::update_value ? "update_value" : "throw_an_exception"));
+}
 
 template<
     typename tkey,
@@ -402,6 +588,14 @@ template<
 [[nodiscard]] inline logger *search_tree<tkey, tvalue>::get_logger() const
 {
     return _logger;
+}
+
+template<
+    typename tkey,
+    typename tvalue>
+inline std::string search_tree<tkey, tvalue>::get_typename() const noexcept
+{
+    return "search_tree<tkey, tvalue>";
 }
 
 #endif //MATH_PRACTICE_AND_OPERATING_SYSTEMS_SEARCH_TREE_H
