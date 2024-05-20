@@ -806,7 +806,7 @@ std::vector<typename associative_container<tkey, tvalue>::key_value_pair> b_tree
     auto iter = infix_const_iterator(path);
     auto end_iter = infix_const_iterator(nullptr);
     
-    if (comparer(found_key, lower_bound) == 0 && !lower_bound_inclusive)
+    if (comparer(found_key, lower_bound) < (lower_bound_inclusive ? 0 : 1))
     {
         ++iter;
     }
