@@ -744,7 +744,7 @@ big_integer big_integer::operator*(
 big_integer &big_integer::operator/=(
     big_integer const &other)
 {
-    auto [quotiend, remainder] = divide_with_remainder(*this, other, true);
+    auto [quotiend, _] = divide_with_remainder(*this, other, true);
     
     return *this = quotiend.value();
 }
@@ -764,7 +764,7 @@ big_integer big_integer::operator/(
 big_integer &big_integer::operator%=(
     big_integer const &other)
 {
-    auto [quotiend, remainder] = divide_with_remainder(*this, other, false);
+    auto [_, remainder] = divide_with_remainder(*this, other, false);
     
     return *this = remainder;
 }
@@ -924,7 +924,7 @@ big_integer &big_integer::operator<<=(
     
     constexpr int half_shift = sizeof(unsigned int) << 2;
     constexpr int half_mask = (1 << half_shift) - 1;
-    bool is_shift_bigger_than_half = shift > half_shift;
+    bool is_shift_bigger_than_half = shift >= half_shift;
     shift %= half_shift;
     
     size_t pos = added_young_zeros;
@@ -1000,7 +1000,7 @@ big_integer &big_integer::operator>>=(
     
     constexpr int half_shift = sizeof(unsigned int) << 2;
     constexpr int half_mask = (1 << half_shift) - 1;
-    bool is_shift_bigger_than_half = shift > half_shift;
+    bool is_shift_bigger_than_half = shift >= half_shift;
     shift %= half_shift;
     
     size_t pos = 0;
@@ -1433,8 +1433,22 @@ void big_integer::initialize_from(
 big_integer &big_integer::change_sign()
 {
     _oldest_digit ^= (1 << ((sizeof(int) << 3) - 1));
-
-    //_oldest_digit = -_oldest_digit;
+    
+    // if (_oldest_digit == 0)
+    // {
+    //     _oldest_digit = _other_digits[get_digits_count() - 1];
+    //     --(*_other_digits);      
+    // }
+    // else if (_oldest_digit == std::numeric_limits<int>::min())
+    // {
+    //     _other_digits[get_digits_count()] = _oldest_digit;
+    //     _oldest_digit = 0;
+    //     ++(*_other_digits); 
+    // }
+    // else
+    // {
+    //     _oldest_digit = -_oldest_digit;
+    // }
 
     return *this;
 }
@@ -1462,8 +1476,8 @@ void big_integer::dump_int_value(
 }
 
 size_t big_integer::get_significant_digits_cnt(
-        int const *digits,
-        size_t digits_count,
+    int const *digits,
+    size_t digits_count,
     bool forced_to_be_positive)
 {
     size_t significant_digits_cnt = digits_count;
