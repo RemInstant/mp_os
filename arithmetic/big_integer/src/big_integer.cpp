@@ -2,6 +2,7 @@
 #include <string>
 #include <limits>
 #include <algorithm>
+#include <cmath>
 
 #include "../include/big_integer.h"
 
@@ -11,7 +12,96 @@ big_integer &big_integer::trivial_multiplication::multiply(
     big_integer &first_multiplier,
     big_integer const &second_multiplier) const
 {
-    throw not_implemented("big_integer &big_integer::trivial_multiplication::multiply(big_integer &, big_integer const &)", "your code should be here...");
+    if (second_multiplier.is_equal_to_zero())
+    {
+        return first_multiplier = second_multiplier;
+    }
+    
+    if (first_multiplier.is_equal_to_zero())
+    {
+        return first_multiplier;
+    }
+    
+    if (second_multiplier.is_equal_to_one())
+    {
+        return first_multiplier;
+    }
+    
+    if (first_multiplier.is_equal_to_one())
+    {
+        return first_multiplier = second_multiplier;
+    }
+    
+    if (first_multiplier.sign() == -1)
+    {
+        return multiply(first_multiplier.change_sign(), second_multiplier).change_sign();
+    }
+    
+    if (second_multiplier.sign() == -1)
+    {
+        return multiply(first_multiplier, -second_multiplier).change_sign();
+    }
+    
+    auto const first_value_digits_count = first_multiplier.get_digits_count();
+    auto const second_value_digits_count = second_multiplier.get_digits_count();
+    auto const max_digits_count = first_value_digits_count + second_value_digits_count;
+    
+    constexpr int shift = sizeof(unsigned int) << 2;
+    constexpr int mask = (1 << shift) - 1;
+    
+    std::vector<int> half_digits(2 * max_digits_count, 0);
+    size_t pos_shift = 0;
+    
+    auto first_iter = first_multiplier.half_cbegin();
+    auto first_iter_end = first_multiplier.half_cend();
+    
+    for (; first_iter != first_iter_end; ++first_iter)
+    {
+        if (*first_iter == 0)
+        {
+            ++pos_shift;
+            continue;
+        }
+        
+        size_t pos = 0;
+        unsigned int operation_result = 0;  
+        
+        auto second_iter = second_multiplier.half_cbegin();
+        auto second_iter_end = second_multiplier.half_cend();
+        
+        for (; second_iter != second_iter_end; ++second_iter)
+        {
+            operation_result += *first_iter * *second_iter + half_digits[pos_shift + pos];
+            half_digits[pos_shift + pos++] = operation_result & mask;
+            
+            operation_result >>= shift;
+        }
+        
+        for (; operation_result && (pos_shift + pos) < half_digits.size(); ++pos)
+        {
+            operation_result += half_digits[pos_shift + pos];
+            half_digits[pos_shift + pos++] = operation_result & mask;
+            
+            operation_result >>= shift;
+        }
+        
+        if (operation_result)
+        {
+            // TODO logger log error
+            throw std::logic_error("too much digit carrying while mupltiplicating");
+        }
+        
+        ++pos_shift;
+    }
+    
+    std::vector<int> result_digits(max_digits_count);
+    
+    for (size_t i = 0; i < max_digits_count; ++i)
+    {
+        result_digits[i] = (half_digits[2*i + 1] << shift) + half_digits[2*i];
+    }
+    
+    return first_multiplier.clear().initialize_from(result_digits, get_significant_digits_cnt(result_digits, true));
 }
 
 big_integer &big_integer::Karatsuba_multiplication::multiply(
@@ -32,12 +122,114 @@ big_integer &big_integer::Schonhage_Strassen_multiplication::multiply(
 
 #pragma region custom division implementation
 
+std::pair<std::optional<big_integer>, big_integer> big_integer::trivial_division::divide_with_remainder(
+    big_integer const &dividend,
+    big_integer const &divisor,
+    bool eval_quotient,
+    big_integer::multiplication_rule multiplication_rule) const
+{
+    if (divisor.is_equal_to_zero())
+    {
+        // todo log logger log custom error
+        throw std::logic_error("attempt to divide by zero");
+    }
+    
+    if (dividend.is_equal_to_zero())
+    {
+        return std::make_pair(std::optional(big_integer(0)), big_integer(0));
+    }
+    
+    if (divisor.is_equal_to_one())
+    {
+        return std::make_pair(std::optional(dividend), big_integer(0));
+    }
+    
+    if (dividend.sign() == -1)
+    {
+        auto [quotient, remainder] = divide_with_remainder(-dividend, divisor, eval_quotient, multiplication_rule);
+        
+        if (quotient.has_value())
+        {
+            return std::make_pair(std::optional(-quotient.value()), -remainder);
+        }
+        else
+        {
+            return std::make_pair(std::optional<big_integer>(), -remainder);
+        }
+    }
+    
+    if (divisor.sign() == -1)
+    {
+        auto [quotient, remainder] = divide_with_remainder(dividend, -divisor, eval_quotient, multiplication_rule);
+        
+        if (quotient.has_value())
+        {
+            return std::make_pair(std::optional(-quotient.value()), -remainder);
+        }
+        else
+        {
+            return std::make_pair(std::optional<big_integer>(), -remainder);
+        }
+    }
+    
+    auto const dividend_digits_count = dividend.get_digits_count();
+    
+    std::vector<int> result_digits(1, 0);
+    big_integer minuend(0);
+    
+    for (size_t i = 0; i < dividend_digits_count; ++i)
+    {
+        unsigned int cur_digit = dividend.get_digit(dividend_digits_count - i - 1);
+        
+        minuend <<= 8 * sizeof(unsigned int);
+        minuend += big_integer(std::vector<int>( {*reinterpret_cast<int *>(&cur_digit), 0} ));
+        
+        if (minuend < divisor)
+        {
+            result_digits.push_back(0);
+        }
+        else
+        {
+            unsigned int digit = 0;
+            big_integer subtrahend(0);
+            
+            for (unsigned int multiplier = 1 << (8*sizeof(unsigned int) - 1); multiplier > 0; multiplier >>= 1)
+            {
+                int multiplier_int = *reinterpret_cast<int *>(&multiplier);
+                big_integer tmp = multiply(divisor, big_integer(std::vector<int>( {multiplier_int, 0} )));
+                
+                if (minuend >= subtrahend + tmp)
+                {
+                    subtrahend += tmp;
+                    digit += multiplier;
+                }
+            }
+            
+            minuend -= subtrahend;
+            
+            if (eval_quotient)
+            {
+                result_digits.push_back(digit);
+            }
+        }
+    }
+    
+    if (eval_quotient)
+    {
+        std::reverse(result_digits.begin(), result_digits.end());
+        
+        return std::make_pair(std::optional(big_integer(result_digits)), minuend);
+    }
+    
+    return std::make_pair(std::optional<big_integer>(), minuend);
+}
+
 big_integer &big_integer::trivial_division::divide(
     big_integer &dividend,
     big_integer const &divisor,
     big_integer::multiplication_rule multiplication_rule) const
 {
-    throw not_implemented("big_integer &big_integer::trivial_division::divide(big_integer &, big_integer const &, big_integer::multiplication_rule)", "your code should be here...");
+    return dividend = divide_with_remainder(dividend, divisor, true, multiplication_rule).first.value();
 }
 
 big_integer &big_integer::trivial_division::modulo(
@@ -45,7 +237,7 @@ big_integer &big_integer::trivial_division::modulo(
     big_integer const &divisor,
     big_integer::multiplication_rule multiplication_rule) const
 {
-    throw not_implemented("big_integer &big_integer::trivial_division::modulo(big_integer &, big_integer const &, big_integer::multiplication_rule)", "your code should be here...");
+    return dividend = divide_with_remainder(dividend, divisor, true, multiplication_rule).second;
 }
 
 big_integer &big_integer::Newton_division::divide(
@@ -292,6 +484,13 @@ big_integer::big_integer(
     initialize_from(value_as_string, base);
 }
 
+big_integer::big_integer(
+    big_integer const &other,
+    allocator *allocator)
+{
+    copy_from(other, allocator);
+}
+
 #pragma endregion general constructors
 
 #pragma region rule of five implementation
@@ -304,7 +503,7 @@ big_integer::~big_integer()
 big_integer::big_integer(
     big_integer const &other)
 {
-    copy_from(other);
+    copy_from(other, other._allocator);
 }
 
 big_integer &big_integer::operator=(
@@ -313,7 +512,7 @@ big_integer &big_integer::operator=(
     if (this != &other)
     {
         clear();
-        copy_from(other);
+        copy_from(other, other._allocator);
     }
     
     return *this;
@@ -537,7 +736,7 @@ big_integer big_integer::operator+(
 big_integer big_integer::operator+(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) += other.first;
+    return big_integer(*this, other.second) += other.first;
 }
 
 big_integer &big_integer::operator-=(
@@ -625,108 +824,13 @@ big_integer big_integer::operator-(
 big_integer big_integer::operator-(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) -= other.first;
+    return big_integer(*this, other.second) -= other.first;
 }
 
 big_integer &big_integer::operator*=(
     big_integer const &other)
 {
-    if (other.is_equal_to_zero())
-    {
-        return *this = other;
-    }
-    
-    if (is_equal_to_zero())
-    {
-        return *this;
-    }
-    
-    if (other.is_equal_to_one())
-    {
-        return *this;
-    }
-    
-    if (is_equal_to_one())
-    {
-        return *this = other;
-    }
-    
-    if (sign() == -1)
-    {
-        return change_sign()
-                .operator*=(other)
-                .change_sign();
-    }
-    
-    if (other.sign() == -1)
-    {
-        return operator*=(-other)
-                .change_sign();
-    }
-    
-    auto const first_value_digits_count = get_digits_count();
-    auto const second_value_digits_count = other.get_digits_count();
-    auto const max_digits_count = first_value_digits_count + second_value_digits_count;
-    
-    constexpr int shift = sizeof(unsigned int) << 2;
-    constexpr int mask = (1 << shift) - 1;
-    
-    std::vector<int> half_digits(2 * max_digits_count, 0);
-    size_t pos_shift = 0;
-    
-    auto first_iter = half_cbegin();
-    auto first_iter_end = half_cend();
-    
-    for (; first_iter != first_iter_end; ++first_iter)
-    {
-        if (*first_iter == 0)
-        {
-            ++pos_shift;
-            continue;
-        }
-        
-        size_t pos = 0;
-        unsigned int operation_result = 0;  
-        
-        auto second_iter = other.half_cbegin();
-        auto second_iter_end = other.half_cend();
-        
-        for (; second_iter != second_iter_end; ++second_iter)
-        {
-            operation_result += *first_iter * *second_iter + half_digits[pos_shift + pos];
-            half_digits[pos_shift + pos++] = operation_result & mask;
-            
-            operation_result >>= shift;
-        }
-        
-        for (; operation_result && (pos_shift + pos) < half_digits.size(); ++pos)
-        {
-            operation_result += half_digits[pos_shift + pos];
-            half_digits[pos_shift + pos++] = operation_result & mask;
-            
-            operation_result >>= shift;
-        }
-        
-        if (operation_result)
-        {
-            // TODO logger log error
-            throw std::logic_error("too much digit carrying while mupltiplicating");
-        }
-        
-        ++pos_shift;
-    }
-    
-    std::vector<int> result_digits(max_digits_count);
-    
-    for (size_t i = 0; i < max_digits_count; ++i)
-    {
-        result_digits[i] = (half_digits[2*i + 1] << shift) + half_digits[2*i];
-    }
-    
-    clear();
-    initialize_from(result_digits, get_significant_digits_cnt(result_digits, true));
-    
-    return *this;
+    return trivial_multiplication().multiply(*this, other);
 }
 
 big_integer big_integer::operator*(
@@ -738,15 +842,13 @@ big_integer big_integer::operator*(
 big_integer big_integer::operator*(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) *= other.first;
+    return big_integer(*this, other.second) *= other.first;
 }
 
 big_integer &big_integer::operator/=(
     big_integer const &other)
 {
-    auto [quotiend, _] = divide_with_remainder(*this, other, true);
-    
-    return *this = quotiend.value();
+    return trivial_division().divide(*this, other, multiplication_rule::trivial);
 }
 
 big_integer big_integer::operator/(
@@ -758,15 +860,13 @@ big_integer big_integer::operator/(
 big_integer big_integer::operator/(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) /= other.first;
+    return big_integer(*this, other.second) /= other.first;
 }
 
 big_integer &big_integer::operator%=(
     big_integer const &other)
 {
-    auto [_, remainder] = divide_with_remainder(*this, other, false);
-    
-    return *this = remainder;
+    return trivial_division().modulo(*this, other, multiplication_rule::trivial);
 }
 
 big_integer big_integer::operator%(
@@ -778,7 +878,7 @@ big_integer big_integer::operator%(
 big_integer big_integer::operator%(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) %= other.first;
+    return big_integer(*this, other.second) %= other.first;
 }
 
 #pragma endregion standard operations implementation
@@ -834,7 +934,7 @@ big_integer big_integer::operator&(
 big_integer big_integer::operator&(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) &= other.first;
+    return big_integer(*this, other.second) &= other.first;
 }
 
 big_integer &big_integer::operator|=(
@@ -868,7 +968,7 @@ big_integer big_integer::operator|(
 big_integer big_integer::operator|(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) |= other.first;
+    return big_integer(*this, other.second) |= other.first;
 }
 
 big_integer &big_integer::operator^=(
@@ -902,7 +1002,7 @@ big_integer big_integer::operator^(
 big_integer big_integer::operator^(
     std::pair<big_integer, allocator *> const &other) const
 {
-    return big_integer(0, other.second) += big_integer(*this) ^= other.first;
+    return big_integer(*this, other.second) ^= other.first;
 }
 
 big_integer &big_integer::operator<<=(
@@ -1068,7 +1168,15 @@ big_integer &big_integer::multiply(
     allocator *allocator,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer &big_integer::multiply(big_integer &, big_integer const &, allocator *, big_integer::multiplication_rule)", "your code should be here...");
+    switch (multiplication_rule)
+    {
+        case multiplication_rule::trivial:
+            return trivial_multiplication().multiply(first_multiplier, second_multiplier);
+        case multiplication_rule::Karatsuba: // not implemented
+            return Karatsuba_multiplication().multiply(first_multiplier, second_multiplier);
+        case multiplication_rule::SchonhageStrassen: // not implemented
+            return Schonhage_Strassen_multiplication().multiply(first_multiplier, second_multiplier);
+    }
 }
 
 big_integer big_integer::multiply(
@@ -1077,7 +1185,18 @@ big_integer big_integer::multiply(
     allocator *allocator,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer big_integer::multiply(big_integer const &, big_integer const &, allocator *, big_integer::multiplication_rule)", "your code should be here...");
+    big_integer first_multiplier_copy(first_multiplier, allocator);
+    
+    switch (multiplication_rule)
+    {
+        case multiplication_rule::trivial:
+            return trivial_multiplication().multiply(first_multiplier_copy, second_multiplier);
+        case multiplication_rule::Karatsuba: // not implemented
+            return Karatsuba_multiplication().multiply(first_multiplier_copy, second_multiplier);
+        case multiplication_rule::SchonhageStrassen: // not implemented
+            return Schonhage_Strassen_multiplication().multiply(first_multiplier_copy, second_multiplier);
+            
+    }
 }
 
 big_integer &big_integer::divide(
@@ -1087,7 +1206,15 @@ big_integer &big_integer::divide(
     big_integer::division_rule division_rule,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer &big_integer::divide(big_integer &, big_integer const &, allocator *, big_integer::division_rule, big_integer::multiplication_rule)", "your code should be here...");
+    switch (division_rule)
+    {
+        case division_rule::trivial:
+            return trivial_division().divide(dividend, divisor, multiplication_rule);
+        case division_rule::Newton: // not implemented
+            return Newton_division().divide(dividend, divisor, multiplication_rule);
+        case division_rule::BurnikelZiegler: // not implemented
+            return Burnikel_Ziegler_division().divide(dividend, divisor, multiplication_rule);
+    }
 }
 
 big_integer big_integer::divide(
@@ -1097,7 +1224,17 @@ big_integer big_integer::divide(
     big_integer::division_rule division_rule,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer big_integer::divide(big_integer const &, big_integer const &, allocator *, big_integer::division_rule, big_integer::multiplication_rule)", "your code should be here...");
+    big_integer dividend_copy(dividend, allocator);
+    
+    switch (division_rule)
+    {
+        case division_rule::trivial:
+            return trivial_division().divide(dividend_copy, divisor, multiplication_rule);
+        case division_rule::Newton: // not implemented
+            return Newton_division().divide(dividend_copy, divisor, multiplication_rule);
+        case division_rule::BurnikelZiegler: // not implemented
+            return Burnikel_Ziegler_division().divide(dividend_copy, divisor, multiplication_rule);
+    }
 }
 
 big_integer &big_integer::modulo(
@@ -1107,7 +1244,15 @@ big_integer &big_integer::modulo(
     big_integer::division_rule division_rule,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer &big_integer::modulo(big_integer &, big_integer const &, allocator *, big_integer::division_rule, big_integer::multiplication_rule)", "your code should be here...");
+    switch (division_rule)
+    {
+        case division_rule::trivial:
+            return trivial_division().modulo(dividend, divisor, multiplication_rule);
+        case division_rule::Newton: // not implemented
+            return Newton_division().modulo(dividend, divisor, multiplication_rule);
+        case division_rule::BurnikelZiegler: // not implemented
+            return Newton_division().modulo(dividend, divisor, multiplication_rule);
+    }
 }
 
 big_integer big_integer::modulo(
@@ -1117,7 +1262,17 @@ big_integer big_integer::modulo(
     big_integer::division_rule division_rule,
     big_integer::multiplication_rule multiplication_rule)
 {
-    throw not_implemented("big_integer big_integer::modulo(big_integer const &, big_integer const &, allocator *, big_integer::division_rule, big_integer::multiplication_rule)", "your code should be here...");
+    big_integer dividend_copy(dividend, allocator);
+    
+    switch (division_rule)
+    {
+        case division_rule::trivial:
+            return trivial_division().modulo(dividend_copy, divisor, multiplication_rule);
+        case division_rule::Newton: // not implemented
+            return Newton_division().modulo(dividend_copy, divisor, multiplication_rule);
+        case division_rule::BurnikelZiegler: // not implemented
+            return Newton_division().modulo(dividend_copy, divisor, multiplication_rule);
+    }
 }
 
 #pragma endregion custom multiplication and division implementation
@@ -1224,7 +1379,7 @@ std::string big_integer::to_string() const
         big_number.change_sign();
     }
     
-    size_t const big_modulus_zeros_cnt = 9;
+    size_t const big_modulus_zeros_cnt = static_cast<size_t>(std::log10(std::numeric_limits<unsigned int>::max()));
     size_t big_modulus = 1;
     
     for (size_t i = 0; i < big_modulus_zeros_cnt; ++i)
@@ -1232,18 +1387,19 @@ std::string big_integer::to_string() const
         big_modulus *= 10;
     }
     
+    big_integer modulus(big_modulus);
+    
     while (!big_number.is_equal_to_zero())
     {
-        auto [quotient, remainder] = big_integer::divide_with_remainder(big_number, big_integer(big_modulus), true);
+        auto remainder = big_number % modulus;
+        big_number /= modulus;
         
         unsigned int tmp = remainder.get_digit(0);
-        for (size_t i = 0; i < big_modulus_zeros_cnt && (tmp || !quotient.value().is_equal_to_zero()); ++i)
+        for (size_t i = 0; i < big_modulus_zeros_cnt && (tmp || !big_number.is_equal_to_zero()); ++i)
         {
             str.push_back('0' + tmp % 10);
             tmp /= 10;
         }
-        
-        big_number = quotient.value();
     }
     
     if (is_equal_to_zero())
@@ -1263,25 +1419,28 @@ std::string big_integer::to_string() const
 
 #pragma region utility methods implementation
 
-void big_integer::clear()
+big_integer &big_integer::clear()
 {
     deallocate_with_guard(_other_digits);
     
     _oldest_digit = 0;
     _other_digits = nullptr;
     _allocator = nullptr;
+    
+    return *this;
 }
 
-void big_integer::copy_from(
-    big_integer const &other)
+big_integer &big_integer::copy_from(
+    big_integer const &other,
+    allocator *allocator)
 {
     _oldest_digit = other._oldest_digit;
     _other_digits = nullptr;
-    _allocator = other._allocator;
+    _allocator = allocator;
     
     if (other._other_digits == nullptr)
     {
-        return;
+        return *this;
     }
     
     try
@@ -1296,9 +1455,11 @@ void big_integer::copy_from(
     }
     
     std::memcpy(_other_digits, other._other_digits, sizeof(unsigned int) * other.get_digits_count());
+    
+    return *this;
 }
 
-void big_integer::move_from(
+big_integer &big_integer::move_from(
     big_integer &&other)
 {
     _oldest_digit = other._oldest_digit;
@@ -1308,9 +1469,11 @@ void big_integer::move_from(
     other._oldest_digit = 0;
     other._other_digits = nullptr;
     other._allocator = nullptr;
+    
+    return *this;
 }
 
-void big_integer::initialize_from(
+big_integer &big_integer::initialize_from(
     int const *digits,
     size_t digits_count)
 {
@@ -1337,7 +1500,7 @@ void big_integer::initialize_from(
     
     if (digits_count == 1)
     {
-        return;
+        return *this;
     }
     
     try
@@ -1354,9 +1517,11 @@ void big_integer::initialize_from(
     *_other_digits = static_cast<unsigned int>(digits_count);
     
     std::memcpy(_other_digits + 1, digits, sizeof(unsigned int) * (digits_count - 1));
+    
+    return *this;
 }
 
-void big_integer::initialize_from(
+big_integer &big_integer::initialize_from(
     std::vector<int> const &digits,
     size_t digits_count)
 {
@@ -1371,7 +1536,7 @@ void big_integer::initialize_from(
     
     if (digits_count == 1)
     {
-        return;
+        return *this;
     }
     
     try
@@ -1393,9 +1558,11 @@ void big_integer::initialize_from(
                 ? *reinterpret_cast<unsigned int const *>(&digits[i])
                 : 0);
     }
+    
+    return *this;
 }
 
-void big_integer::initialize_from(
+big_integer &big_integer::initialize_from(
     std::string const &value_as_string,
     size_t base)
 {
@@ -1428,6 +1595,8 @@ void big_integer::initialize_from(
     {
         change_sign();
     }
+    
+    return *this;
 }
 
 big_integer &big_integer::change_sign()
@@ -1540,106 +1709,108 @@ size_t big_integer::get_significant_digits_cnt(
     return significant_digits_cnt;
 }
 
-std::pair<std::optional<big_integer>, big_integer> big_integer::divide_with_remainder(
-    big_integer const &dividend,
-    big_integer const &divisor,
-    bool eval_quotient)
-{
-    if (divisor.is_equal_to_zero())
-    {
-        // todo log logger log custom error
-        throw std::logic_error("attempt to divide by zero");
-    }
+// std::pair<std::optional<big_integer>, big_integer> big_integer::divide_with_remainder(
+//     big_integer const &dividend,
+//     big_integer const &divisor,
+//     bool eval_quotient,
+//     big_integer::multiplication_rule multiplication_rule)
+// {
+//     if (divisor.is_equal_to_zero())
+//     {
+//         // todo log logger log custom error
+//         throw std::logic_error("attempt to divide by zero");
+//     }
     
-    if (dividend.is_equal_to_zero())
-    {
-        return std::make_pair(std::optional(big_integer(0)), big_integer(0));
-    }
+//     if (dividend.is_equal_to_zero())
+//     {
+//         return std::make_pair(std::optional(big_integer(0)), big_integer(0));
+//     }
     
-    if (divisor.is_equal_to_one())
-    {
-        return std::make_pair(std::optional(dividend), big_integer(0));
-    }
+//     if (divisor.is_equal_to_one())
+//     {
+//         return std::make_pair(std::optional(dividend), big_integer(0));
+//     }
     
-    if (dividend.sign() == -1)
-    {
-        auto [quotient, remainder] = divide_with_remainder(-dividend, divisor, eval_quotient);
+//     if (dividend.sign() == -1)
+//     {
+//         auto [quotient, remainder] = divide_with_remainder(-dividend, divisor, eval_quotient, multiplication_rule);
         
-        if (quotient.has_value())
-        {
-            return std::make_pair(std::optional(-quotient.value()), -remainder);
-        }
-        else
-        {
-            return std::make_pair(std::optional<big_integer>(), -remainder);
-        }
-    }
+//         if (quotient.has_value())
+//         {
+//             return std::make_pair(std::optional(-quotient.value()), -remainder);
+//         }
+//         else
+//         {
+//             return std::make_pair(std::optional<big_integer>(), -remainder);
+//         }
+//     }
     
-    if (divisor.sign() == -1)
-    {
-        auto [quotient, remainder] = divide_with_remainder(dividend, -divisor, eval_quotient);
+//     if (divisor.sign() == -1)
+//     {
+//         auto [quotient, remainder] = divide_with_remainder(dividend, -divisor, eval_quotient, multiplication_rule);
         
-        if (quotient.has_value())
-        {
-            return std::make_pair(std::optional(-quotient.value()), -remainder);
-        }
-        else
-        {
-            return std::make_pair(std::optional<big_integer>(), -remainder);
-        }
-    }
+//         if (quotient.has_value())
+//         {
+//             return std::make_pair(std::optional(-quotient.value()), -remainder);
+//         }
+//         else
+//         {
+//             return std::make_pair(std::optional<big_integer>(), -remainder);
+//         }
+//     }
     
-    auto const dividend_digits_count = dividend.get_digits_count();
+//     auto const dividend_digits_count = dividend.get_digits_count();
     
-    std::vector<int> result_digits(1, 0);
-    big_integer minuend(0);
+//     std::vector<int> result_digits(1, 0);
+//     big_integer minuend(0);
     
-    for (size_t i = 0; i < dividend_digits_count; ++i)
-    {
-        unsigned int cur_digit = dividend.get_digit(dividend_digits_count - i - 1);
+//     for (size_t i = 0; i < dividend_digits_count; ++i)
+//     {
+//         unsigned int cur_digit = dividend.get_digit(dividend_digits_count - i - 1);
         
-        minuend <<= 8 * sizeof(unsigned int);
-        minuend += big_integer(std::vector<int>( {*reinterpret_cast<int *>(&cur_digit), 0} ));
+//         minuend <<= 8 * sizeof(unsigned int);
+//         minuend += big_integer(std::vector<int>( {*reinterpret_cast<int *>(&cur_digit), 0} ));
         
-        if (minuend < divisor)
-        {
-            result_digits.push_back(0);
-        }
-        else
-        {
-            unsigned int digit = 0;
-            big_integer subtrahend(0);
+//         if (minuend < divisor)
+//         {
+//             result_digits.push_back(0);
+//         }
+//         else
+//         {
+//             unsigned int digit = 0;
+//             big_integer subtrahend(0);
             
-            for (unsigned int multiplier = 1 << (8*sizeof(unsigned int) - 1); multiplier > 0; multiplier >>= 1)
-            {
-                int multiplier_int = *reinterpret_cast<int *>(&multiplier);
-                big_integer tmp = divisor * big_integer(std::vector<int>( {multiplier_int, 0} ));
+//             for (unsigned int multiplier = 1 << (8*sizeof(unsigned int) - 1); multiplier > 0; multiplier >>= 1)
+//             {
+//                 int multiplier_int = *reinterpret_cast<int *>(&multiplier);
+//                 big_integer tmp = multiply(divisor, big_integer(std::vector<int>( {multiplier_int, 0} )));
+//                 //big_integer tmp = divisor * big_integer(std::vector<int>( {multiplier_int, 0} ));
                 
-                if (minuend >= subtrahend + tmp)
-                {
-                    subtrahend += tmp;
-                    digit += multiplier;
-                }
-            }
+//                 if (minuend >= subtrahend + tmp)
+//                 {
+//                     subtrahend += tmp;
+//                     digit += multiplier;
+//                 }
+//             }
             
-            minuend -= subtrahend;
+//             minuend -= subtrahend;
             
-            if (eval_quotient)
-            {
-                result_digits.push_back(digit);
-            }
-        }
-    }
+//             if (eval_quotient)
+//             {
+//                 result_digits.push_back(digit);
+//             }
+//         }
+//     }
     
-    if (eval_quotient)
-    {
-        std::reverse(result_digits.begin(), result_digits.end());
+//     if (eval_quotient)
+//     {
+//         std::reverse(result_digits.begin(), result_digits.end());
         
-        return std::make_pair(std::optional(big_integer(result_digits)), minuend);
-    }
+//         return std::make_pair(std::optional(big_integer(result_digits)), minuend);
+//     }
     
-    return std::make_pair(std::optional<big_integer>(), minuend);
-}
+//     return std::make_pair(std::optional<big_integer>(), minuend);
+// }
 
 unsigned int big_integer::char_to_int(
     char ch)

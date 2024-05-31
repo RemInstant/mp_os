@@ -113,7 +113,7 @@ private:
     {
     
     public:
-        
+    
         big_integer &divide(
             big_integer &dividend,
             big_integer const &divisor,
@@ -123,7 +123,16 @@ private:
             big_integer &dividend,
             big_integer const &divisor,
             big_integer::multiplication_rule multiplication_rule) const override;
+    
+    private:
         
+        std::pair<std::optional<big_integer>, big_integer> divide_with_remainder(
+            big_integer const &dividend,
+            big_integer const &divisor,
+            bool eval_quotient,
+            big_integer::multiplication_rule multiplication_rule) const;
+    
+    
     };
     
     class Newton_division final:
@@ -288,6 +297,10 @@ public:
         std::string const &value_as_string,
         size_t base = 10,
         allocator *allocator = nullptr);
+    
+    explicit big_integer(
+        big_integer const &other,
+        allocator *allocator);
 
 public:
 
@@ -533,23 +546,24 @@ private:
 
     #pragma region utility methods
     
-    void clear();
+    big_integer &clear();
     
-    void copy_from(
-        big_integer const &other);
+    big_integer &copy_from(
+        big_integer const &other,
+        allocator *allocator);
         
-    void move_from(
+    big_integer &move_from(
         big_integer &&other);
     
-    void initialize_from(
+    big_integer &initialize_from(
         int const *digits,
         size_t digits_count);
 
-    void initialize_from(
+    big_integer &initialize_from(
         std::vector<int> const &digits,
         size_t digits_count);
 
-    void initialize_from(
+    big_integer &initialize_from(
         std::string const &value,
         size_t base);
     
@@ -575,7 +589,8 @@ private:
     static std::pair<std::optional<big_integer>, big_integer> divide_with_remainder(
         big_integer const &dividend,
         big_integer const &divisor,
-        bool eval_quotient);
+        bool eval_quotient,
+        big_integer::multiplication_rule multiplication_rule = multiplication_rule::trivial);
     
     static unsigned int char_to_int(
         char ch);
