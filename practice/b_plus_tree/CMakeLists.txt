@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.21)
+project(mp_os_practice_b_plus_tr)
+
+add_executable(
+        mp_os_practice_b_plus_tr
+        b_plus_tree.cpp)
+target_include_directories(
+        mp_os_practice_b_plus_tr
+        PUBLIC
+        ./include)
+set_target_properties(
+        mp_os_practice_b_plus_tr PROPERTIES
+        LANGUAGES CXX
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+        VERSION 1.0
+        DESCRIPTION "practice")
