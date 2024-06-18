@@ -75,8 +75,12 @@ int main()
         
         // send request to server
         
-        addr->cmd = cmd;
-        addr->data = data;
+        if (res != -1)
+        {
+            addr->cmd = cmd;
+            addr->data = data;
+        }
+        
         sem_cmd[0].sem_op = 0;
         sem_cmd[1].sem_op = 1;
         res = (res == -1) ? res : semop(sem_fd, sem_cmd, 2);
