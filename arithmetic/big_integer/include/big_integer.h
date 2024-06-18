@@ -522,7 +522,7 @@ public:
 
     #pragma region common integer functions
     
-    inline int get_digits_count() const noexcept;
+    int get_digits_count() const noexcept;
 
     inline int sign() const noexcept;
 
@@ -534,6 +534,16 @@ public:
         int position) const noexcept;
     
     #pragma endregion common integer functions
+
+public:
+
+    #pragma region math functions
+    
+    static big_integer gcd(big_integer const &a, big_integer const &b);
+    
+    big_integer abs() const;
+    
+    #pragma endregion math functions
 
 public:
 

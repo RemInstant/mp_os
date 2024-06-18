@@ -12,6 +12,11 @@ big_integer &big_integer::trivial_multiplication::multiply(
     big_integer &first_multiplier,
     big_integer const &second_multiplier) const
 {
+    if (&first_multiplier == &second_multiplier)
+    {
+        return multiply(first_multiplier, big_integer(second_multiplier));
+    }
+    
     if (second_multiplier.is_equal_to_zero())
     {
         return first_multiplier = second_multiplier;
@@ -128,6 +133,11 @@ std::pair<std::optional<big_integer>, big_integer> big_integer::trivial_division
     bool eval_quotient,
     big_integer::multiplication_rule multiplication_rule) const
 {
+    if (&dividend == &divisor)
+    {
+        return divide_with_remainder(dividend, big_integer(divisor), eval_quotient, multiplication_rule);
+    }
+    
     if (divisor.is_equal_to_zero())
     {
         // todo log logger log custom error
@@ -1304,7 +1314,7 @@ std::istream &operator>>(
 
 #pragma region common integer functions implementation
 
-inline int big_integer::get_digits_count() const noexcept
+int big_integer::get_digits_count() const noexcept
 {
     return static_cast<int>(_other_digits == nullptr
          ? 1
@@ -1354,6 +1364,36 @@ inline unsigned int big_integer::get_digit(
 }
 
 #pragma endregion common integer functions implementation
+
+#pragma region math functions
+
+big_integer big_integer::gcd(big_integer const &a, big_integer const &b)
+{
+    big_integer a_tmp = a.abs();
+    big_integer b_tmp = b.abs();
+    
+    while (!a_tmp.is_equal_to_zero())
+    {
+        b_tmp %= a_tmp;
+        big_integer tmp = std::move(a_tmp);
+        a_tmp = std::move(b_tmp);
+        b_tmp = std::move(tmp);
+    }
+    
+    return b_tmp;
+}
+    
+big_integer big_integer::abs() const
+{
+    if (this->sign() == -1)
+    {
+        return big_integer(*this).change_sign();
+    }
+    
+    return big_integer(*this);
+}
+
+#pragma endregion math functions
 
 void big_integer::dump_value(
     std::ostream &stream) const

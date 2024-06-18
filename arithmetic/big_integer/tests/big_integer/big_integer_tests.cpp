@@ -211,7 +211,12 @@ int main(
     int argc,
     char **argv)
 {
-    testing::InitGoogleTest(&argc, argv);
+    // testing::InitGoogleTest(&argc, argv);
     
-    return RUN_ALL_TESTS();
+    // return RUN_ALL_TESTS();
+    
+    big_integer b(std::vector<int>({1, 1, 1}));
+    
+    (b * b).dump_value(std::cout);
+    std::cout << std::endl;
 }
