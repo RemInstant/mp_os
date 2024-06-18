@@ -17,9 +17,9 @@ typedef struct shm_msg_t
 
 typedef union semun
 {
-    int              val;		// значение семафора
-    struct semid_ds *buf;		// управляющие параметры набора
-    unsigned short   array[2];	// массив значений семафора
+    int              val;       // значение семафора
+    struct semid_ds *buf;       // управляющие параметры набора
+    unsigned short   array[2];  // массив значений семафора
 } semun;
 
 // 0 0 - either client or server is processing data
