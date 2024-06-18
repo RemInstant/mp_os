@@ -30,6 +30,7 @@ int main(
             ->add_file_stream(path, logger::severity::information)
             ->add_file_stream(path, logger::severity::trace)
             ->add_file_stream("/", logger::severity::information)
+            ->transform_with_configuration("cfg.json", "client_logger_builder.config")
             ->build();
     
     logger->information("INFO!!!");
